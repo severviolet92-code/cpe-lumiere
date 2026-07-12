@@ -1,0 +1,203 @@
+import type { Locale } from './config'
+
+/**
+ * Fixed UI strings (navigation, labels, microcopy).
+ * Editorial content lives in the CMS; these are part of the designed product.
+ */
+export const ui = {
+  fr: {
+    skipToContent: 'Aller au contenu',
+    nav: {
+      home: 'Accueil',
+      about: 'Notre CPE',
+      life: 'La vie au CPE',
+      admission: 'Admission',
+      faq: 'Questions fréquentes',
+      careers: 'Carrières',
+      contact: 'Nous joindre',
+      portal: 'Portail parents',
+    },
+    home: {
+      discover: 'Découvrir notre CPE',
+      admission: 'Admission et inscription',
+      careers: 'Travailler avec nous',
+      scrollHint: 'Défiler pour découvrir',
+      closuresTitle: 'Prochaines fermetures',
+      faqTitle: 'Questions fréquentes',
+      faqMore: 'Toutes les questions',
+      groupsTitle: 'Nos groupes',
+      groupsNote: 'Des poupons à la maternelle, chaque groupe grandit à son rythme.',
+    },
+    about: {
+      title: 'Notre CPE',
+      team: 'Notre équipe',
+      values: 'Nos valeurs',
+      pedagogy: 'Notre approche',
+      facilities: 'Nos installations',
+    },
+    life: {
+      title: 'La vie au CPE',
+      day: 'Une journée type',
+      meals: 'Alimentation',
+      activities: 'Nos activités',
+    },
+    admission: {
+      title: 'Admission',
+      steps: 'Les étapes',
+      laPlaceCta: 'S’inscrire sur La Place 0-5',
+      laPlaceNote:
+        'L’admission dans les CPE du Québec passe par le guichet unique La Place 0-5. L’inscription est gratuite.',
+    },
+    faq: {
+      title: 'Questions fréquentes',
+      intro: 'Les réponses officielles du CPE aux questions les plus courantes.',
+      notFoundTitle: 'Vous ne trouvez pas votre réponse ?',
+      notFoundText: 'Écrivez-nous — nous répondons rapidement.',
+      contactCta: 'Nous joindre',
+      categories: {
+        admission: 'Admission et inscription',
+        quotidien: 'Vie quotidienne',
+        sante: 'Santé et sécurité',
+        alimentation: 'Alimentation',
+        general: 'Général',
+      },
+    },
+    careers: {
+      title: 'Carrières',
+      openings: 'Postes ouverts',
+      noOpenings:
+        'Aucun poste affiché pour le moment — mais nous sommes toujours heureux de recevoir une candidature spontanée.',
+      apply: 'Poser sa candidature',
+      schedule: { full: 'Temps plein', part: 'Temps partiel', sub: 'Remplacement' },
+    },
+    contact: {
+      title: 'Nous joindre',
+      phone: 'Téléphone',
+      email: 'Courriel',
+      address: 'Adresse',
+      hours: 'Heures d’ouverture',
+      formTitle: 'Écrivez-nous',
+      formName: 'Votre nom',
+      formEmail: 'Votre courriel',
+      formMessage: 'Votre message',
+      formSend: 'Envoyer le message',
+      formSuccess: 'Merci ! Votre message a bien été envoyé.',
+      formError: 'Le message n’a pas pu être envoyé. Réessayez ou écrivez-nous directement.',
+      formPrivacy:
+        'Vos coordonnées servent uniquement à vous répondre. N’incluez aucun renseignement personnel sur un enfant.',
+    },
+    portal: {
+      title: 'Portail parents',
+      soon: 'Le portail parents arrive bientôt.',
+      text: 'Un espace privé et sécurisé où retrouver les activités, les listes de préparation et les annonces du groupe de votre enfant.',
+    },
+    footer: {
+      quickLinks: 'Liens rapides',
+      contact: 'Coordonnées',
+      privacy: 'Confidentialité',
+      privacyNote: 'Ce site ne publie aucune photo permettant d’identifier un enfant.',
+      demoNotice: 'Site de démonstration — tout le contenu est fictif.',
+    },
+    langToggle: 'English',
+    langToggleShort: 'EN',
+  },
+  en: {
+    skipToContent: 'Skip to content',
+    nav: {
+      home: 'Home',
+      about: 'Our CPE',
+      life: 'Life at the CPE',
+      admission: 'Admission',
+      faq: 'FAQ',
+      careers: 'Careers',
+      contact: 'Contact us',
+      portal: 'Parent portal',
+    },
+    home: {
+      discover: 'Discover our CPE',
+      admission: 'Admission & registration',
+      careers: 'Work with us',
+      scrollHint: 'Scroll to explore',
+      closuresTitle: 'Upcoming closures',
+      faqTitle: 'Frequently asked questions',
+      faqMore: 'All questions',
+      groupsTitle: 'Our groups',
+      groupsNote: 'From infants to preschoolers, every group grows at its own pace.',
+    },
+    about: {
+      title: 'Our CPE',
+      team: 'Our team',
+      values: 'Our values',
+      pedagogy: 'Our approach',
+      facilities: 'Our facilities',
+    },
+    life: {
+      title: 'Life at the CPE',
+      day: 'A typical day',
+      meals: 'Meals',
+      activities: 'Our activities',
+    },
+    admission: {
+      title: 'Admission',
+      steps: 'The steps',
+      laPlaceCta: 'Register on La Place 0-5',
+      laPlaceNote:
+        'Admission to Québec CPEs goes through the single waiting list La Place 0-5. Registration is free.',
+    },
+    faq: {
+      title: 'Frequently asked questions',
+      intro: 'The CPE’s official answers to the most common questions.',
+      notFoundTitle: 'Can’t find your answer?',
+      notFoundText: 'Write to us — we reply quickly.',
+      contactCta: 'Contact us',
+      categories: {
+        admission: 'Admission & registration',
+        quotidien: 'Daily life',
+        sante: 'Health & safety',
+        alimentation: 'Meals',
+        general: 'General',
+      },
+    },
+    careers: {
+      title: 'Careers',
+      openings: 'Open positions',
+      noOpenings:
+        'No positions posted right now — but we are always happy to receive a spontaneous application.',
+      apply: 'Apply',
+      schedule: { full: 'Full-time', part: 'Part-time', sub: 'Substitute' },
+    },
+    contact: {
+      title: 'Contact us',
+      phone: 'Phone',
+      email: 'Email',
+      address: 'Address',
+      hours: 'Opening hours',
+      formTitle: 'Write to us',
+      formName: 'Your name',
+      formEmail: 'Your email',
+      formMessage: 'Your message',
+      formSend: 'Send message',
+      formSuccess: 'Thank you! Your message has been sent.',
+      formError: 'Your message could not be sent. Try again or email us directly.',
+      formPrivacy:
+        'Your contact details are used only to reply to you. Do not include personal information about a child.',
+    },
+    portal: {
+      title: 'Parent portal',
+      soon: 'The parent portal is coming soon.',
+      text: 'A private, secure space for your child’s group activities, preparation checklists, and announcements.',
+    },
+    footer: {
+      quickLinks: 'Quick links',
+      contact: 'Contact',
+      privacy: 'Privacy',
+      privacyNote: 'This site never publishes photos that could identify a child.',
+      demoNotice: 'Demonstration site — all content is fictional.',
+    },
+    langToggle: 'Français',
+    langToggleShort: 'FR',
+  },
+} as const
+
+export type UIDict = (typeof ui)[Locale]
+export const t = (locale: Locale): UIDict => ui[locale]
