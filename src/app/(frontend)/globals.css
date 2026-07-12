@@ -411,6 +411,7 @@ summary:focus-visible {
   }
   .hero__scene {
     order: -1;
+    width: 100%;
     max-width: 480px;
     margin-inline: auto;
   }

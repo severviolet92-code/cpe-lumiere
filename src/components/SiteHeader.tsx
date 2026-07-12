@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import type { Locale } from '../i18n/config'
 import { localizedPath } from '../i18n/config'
@@ -28,9 +28,8 @@ export function SiteHeader({ locale, cpeName }: { locale: Locale; cpeName: strin
   const otherLocale: Locale = locale === 'fr' ? 'en' : 'fr'
   const togglePath = localizedPath(otherLocale, basePath)
 
-  useEffect(() => {
-    setOpen(false)
-  }, [pathname])
+  // Close the mobile menu when any nav link is activated.
+  const closeMenu = () => setOpen(false)
 
   return (
     <header className="site-header">
@@ -49,12 +48,12 @@ export function SiteHeader({ locale, cpeName }: { locale: Locale; cpeName: strin
             const href = localizedPath(locale, path)
             const current = basePath === path
             return (
-              <Link key={path} href={href} aria-current={current ? 'page' : undefined}>
+              <Link key={path} href={href} aria-current={current ? 'page' : undefined} onClick={closeMenu}>
                 {dict.nav[key]}
               </Link>
             )
           })}
-          <Link href={localizedPath(locale, '/portail')}>{dict.nav.portal}</Link>
+          <Link href={localizedPath(locale, '/portail')} onClick={closeMenu}>{dict.nav.portal}</Link>
         </nav>
 
         <div className="header-actions">

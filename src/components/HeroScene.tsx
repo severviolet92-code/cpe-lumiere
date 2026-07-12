@@ -55,7 +55,7 @@ export function HeroScene({ label }: { label: string }) {
   }, [])
 
   return (
-    <div ref={containerRef} style={{ containerType: 'inline-size' }}>
+    <div ref={containerRef}>
       <svg
         viewBox="0 0 660 560"
         role="img"
