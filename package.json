@@ -23,6 +23,8 @@
     "@payloadcms/richtext-lexical": "3.86.0",
     "@payloadcms/translations": "^3.86.0",
     "@payloadcms/ui": "3.86.0",
+    "@react-three/fiber": "^9.6.1",
+    "@types/three": "^0.185.1",
     "cross-env": "10.1.0",
     "dotenv": "16.4.7",
     "graphql": "^16.8.1",
@@ -30,7 +32,8 @@
     "payload": "3.86.0",
     "react": "19.2.6",
     "react-dom": "19.2.6",
-    "sharp": "0.34.2"
+    "sharp": "0.34.2",
+    "three": "^0.185.1"
   },
   "devDependencies": {
     "@types/node": "24.12.3",

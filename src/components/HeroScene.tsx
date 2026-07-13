@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from 'react'
 
+import { HeroTier2 } from './hero3d/HeroTier2'
+
 /**
  * "Lumière du matin" diorama — a stylized miniature playroom at morning.
  * Tier 0: renders instantly as a static vector scene (this IS the LCP element).
@@ -55,7 +57,7 @@ export function HeroScene({ label }: { label: string }) {
   }, [])
 
   return (
-    <div ref={containerRef}>
+    <div ref={containerRef} style={{ position: 'relative' }}>
       <svg
         viewBox="0 0 660 560"
         role="img"
@@ -271,6 +273,7 @@ export function HeroScene({ label }: { label: string }) {
           </g>
         </g>
       </svg>
+      <HeroTier2 />
     </div>
   )
 }
