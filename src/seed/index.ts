@@ -1,16 +1,38 @@
 /**
- * Demo seed — ENTIRELY FICTIONAL content for the demo CPE « Les Lucioles ».
- * No real person, child, address, or CPE is referenced anywhere.
- * Every document is flagged `demoSeed: true`; remove it all with `npm run seed:clear`.
+ * Demo seed — the real CPE is named « La Voie lactée », but EVERYTHING else here
+ * is FICTIONAL demonstration content: no real address, phone, email, staff,
+ * policy, child, or parent is referenced. Placeholders are clearly labelled and
+ * will be replaced by the director's verified information after approval.
+ * Every document is flagged `demoSeed: true`; remove with `npm run seed:clear`.
  */
 import 'dotenv/config'
-import { getPayload } from 'payload'
+import { getPayload, type Payload } from 'payload'
 
 import config from '../payload.config'
+import { renderIllustration } from './illustrations'
 import { rt } from './richText'
 
-const DEMO_DIRECTOR_EMAIL = 'direction@lucioles-demo.example'
+const DEMO_DIRECTOR_EMAIL = 'direction@voielactee-demo.example'
 const DEMO_DIRECTOR_PASSWORD = 'Lumiere-Demo-2026!'
+
+const day = (offset: number) => new Date(Date.now() + offset * 86400000).toISOString().slice(0, 10)
+
+async function uploadIllustration(
+  payload: Payload,
+  theme: string,
+  altFr: string,
+  altEn: string,
+): Promise<number> {
+  const data = await renderIllustration(theme)
+  const doc = await payload.create({
+    collection: 'media',
+    locale: 'fr',
+    data: { alt: altFr, demoSeed: true },
+    file: { data, mimetype: 'image/png', name: `demo-${theme}.png`, size: data.length },
+  })
+  await payload.update({ collection: 'media', id: doc.id, locale: 'en', data: { alt: altEn } })
+  return doc.id as number
+}
 
 async function run() {
   const payload = await getPayload({ config })
@@ -21,11 +43,11 @@ async function run() {
     limit: 1,
   })
   if (existing.docs.length > 0) {
-    console.log('Demo seed already present — nothing to do. Run `npm run seed:clear` first to re-seed.')
+    console.log('Demo seed already present — run `npm run seed:clear` first to re-seed.')
     process.exit(0)
   }
 
-  console.log('Seeding fictional demo content…')
+  console.log('Seeding fictional demo content for « La Voie lactée »…')
 
   // ---- Demo admin account (director role) ----
   const users = await payload.find({
@@ -62,30 +84,33 @@ async function run() {
       data: { ...g.fr, color: g.color, order: i, active: true, demoSeed: true },
     })
     await payload.update({ collection: 'groups', id: doc.id, locale: 'en', data: g.en })
-    groupIds.push(doc.id)
+    groupIds.push(doc.id as number)
   }
+  const [poussins, lapinots, papillons, renardeaux, explorateurs] = groupIds
 
-  // ---- Site settings ----
+  // ---- Site settings (name is real; every coordinate is a labelled placeholder) ----
   await payload.updateGlobal({
     slug: 'site-settings',
     locale: 'fr',
     data: {
-      cpeName: 'CPE Les Lucioles',
-      tagline: 'Un petit monde chaleureux où l’on grandit entouré de lumière.',
-      phone: '418 555-0123',
-      email: 'bonjour@lucioles-demo.example',
-      address: '123, rue de l’Aubépine\nQuébec (Québec)  G1A 0A0',
-      hours: 'Lundi au vendredi, de 7 h à 18 h',
-      permitNote: 'CPE fictif de démonstration — contenu entièrement fictif.',
+      cpeName: 'CPE La Voie lactée',
+      tagline: 'Un petit monde chaleureux où chaque enfant brille à sa façon.',
+      phone: '418 555-0123 (démo)',
+      email: 'bonjour@voielactee-demo.example',
+      address: '123, rue de la Démonstration (adresse fictive)\nQuébec (Québec)  G0X 0X0',
+      hours: 'Lundi au vendredi, de 7 h à 18 h (horaire de démonstration)',
+      permitNote:
+        'Site de démonstration — les coordonnées et politiques affichées sont fictives et seront remplacées par les informations vérifiées du CPE.',
     },
   })
   await payload.updateGlobal({
     slug: 'site-settings',
     locale: 'en',
     data: {
-      tagline: 'A warm little world where children grow up surrounded by light.',
-      hours: 'Monday to Friday, 7 a.m. to 6 p.m.',
-      permitNote: 'Fictional demonstration CPE — all content is fictional.',
+      tagline: 'A warm little world where every child shines in their own way.',
+      hours: 'Monday to Friday, 7 a.m. to 6 p.m. (demonstration hours)',
+      permitNote:
+        'Demonstration site — the contact details and policies shown are fictional and will be replaced with the CPE’s verified information.',
     },
   })
 
@@ -96,10 +121,10 @@ async function run() {
     data: {
       heroTitle: 'Grandir ici, entouré de lumière.',
       heroSubtitle:
-        'Un CPE chaleureux où chaque enfant, de 6 mois à 5 ans, découvre, joue et s’épanouit à son rythme — dans la confiance et la douceur.',
+        'Au CPE La Voie lactée, chaque enfant de 6 mois à 5 ans découvre, joue et s’épanouit à son rythme — dans la confiance et la douceur.',
       introTitle: 'Un milieu de vie pensé pour les tout-petits',
       introText:
-        'Chez Les Lucioles, les journées sont douces et bien rythmées : des éducatrices attentives, des locaux baignés de lumière et une cour où l’on explore en toute sécurité.',
+        'Des éducatrices attentives, des locaux baignés de lumière et des journées riches en découvertes : voici ce qui attend votre enfant, semaine après semaine.',
       highlights: [
         {
           title: 'Des liens qui rassurent',
@@ -122,10 +147,10 @@ async function run() {
     data: {
       heroTitle: 'Growing up here, surrounded by light.',
       heroSubtitle:
-        'A warm CPE where every child, from 6 months to 5 years, discovers, plays and blossoms at their own pace — with confidence and gentleness.',
+        'At CPE La Voie lactée, every child from 6 months to 5 years discovers, plays and blossoms at their own pace — with confidence and gentleness.',
       introTitle: 'A living environment designed for little ones',
       introText:
-        'At Les Lucioles, days are gentle and well paced: attentive educators, light-filled rooms, and a yard made for safe exploring.',
+        'Attentive educators, light-filled rooms and weeks full of discoveries: this is what awaits your child.',
       highlights: [
         {
           title: 'Bonds that reassure',
@@ -149,7 +174,7 @@ async function run() {
     locale: 'fr',
     data: {
       intro:
-        'Le CPE Les Lucioles accueille 60 enfants de 6 mois à 5 ans dans un bâtiment lumineux, à échelle d’enfant, où chaque espace a été pensé pour la découverte.',
+        'Le CPE La Voie lactée accueille des enfants de 6 mois à 5 ans dans un milieu lumineux, à échelle d’enfant, où chaque espace a été pensé pour la découverte. (Description de démonstration.)',
       pedagogy: rt(
         'Notre approche s’inspire du programme éducatif « Accueillir la petite enfance » du ministère de la Famille. L’enfant est l’acteur principal de son développement : nous préparons un environnement riche, puis nous l’accompagnons dans ses explorations plutôt que de les diriger.',
         'Chaque groupe suit le rythme de ses enfants — les poupons ont leurs propres routines de sommeil et de repas, et les plus grands construisent doucement leur autonomie en vue de la maternelle.',
@@ -161,7 +186,7 @@ async function run() {
         { title: 'La collaboration avec les familles', text: 'Les parents sont nos premiers partenaires, chaque jour.' },
       ],
       facilities: rt(
-        'Cinq locaux lumineux adaptés à chaque groupe d’âge, une salle de motricité, une cuisine sur place et une cour extérieure ombragée avec espaces distincts pour les poupons et les plus grands.',
+        'Des locaux lumineux adaptés à chaque groupe d’âge, une salle de motricité, une cuisine sur place et une cour extérieure ombragée avec espaces distincts pour les poupons et les plus grands. (Description de démonstration.)',
       ),
     },
   })
@@ -170,7 +195,7 @@ async function run() {
     locale: 'en',
     data: {
       intro:
-        'CPE Les Lucioles welcomes 60 children aged 6 months to 5 years in a bright, child-scaled building where every space was designed for discovery.',
+        'CPE La Voie lactée welcomes children aged 6 months to 5 years in a bright, child-scaled environment where every space was designed for discovery. (Demonstration description.)',
       pedagogy: rt(
         'Our approach is inspired by the ministère de la Famille’s educational program “Accueillir la petite enfance”. The child is the main actor of their own development: we prepare a rich environment, then accompany their explorations rather than directing them.',
         'Each group follows its children’s rhythm — infants keep their own sleep and meal routines, while the older ones gently build the autonomy they will need for kindergarten.',
@@ -182,7 +207,7 @@ async function run() {
         { title: 'Partnership with families', text: 'Parents are our first partners, every single day.' },
       ],
       facilities: rt(
-        'Five bright rooms adapted to each age group, a motor-skills room, an on-site kitchen, and a shaded outdoor yard with separate areas for infants and older children.',
+        'Bright rooms adapted to each age group, a motor-skills room, an on-site kitchen, and a shaded outdoor yard with separate areas for infants and older children. (Demonstration description.)',
       ),
     },
   })
@@ -193,7 +218,7 @@ async function run() {
     locale: 'fr',
     data: {
       intro:
-        'Une journée aux Lucioles suit un rythme régulier et rassurant, ajusté à chaque groupe d’âge — voici à quoi elle ressemble pour les plus grands.',
+        'Une journée à La Voie lactée suit un rythme régulier et rassurant, ajusté à chaque groupe d’âge — voici à quoi elle ressemble pour les plus grands. (Horaire de démonstration.)',
       dailySchedule: [
         { time: '7 h', moment: 'Accueil en douceur et jeux calmes' },
         { time: '8 h 30', moment: 'Collation et causerie du matin' },
@@ -206,7 +231,7 @@ async function run() {
         { time: '17 h', moment: 'Départs et au revoir' },
       ],
       meals: rt(
-        'Tous les repas et collations sont préparés sur place par notre cuisinière. Les menus, affichés chaque semaine, suivent le Guide alimentaire canadien et sont adaptés aux allergies et intolérances de chaque enfant.',
+        'Tous les repas et collations sont préparés sur place. Les menus, affichés chaque semaine, suivent le Guide alimentaire canadien et sont adaptés aux allergies et intolérances de chaque enfant.',
         'Les poupons suivent leur propre horaire de boires et de purées, en continuité avec les habitudes de la maison.',
       ),
       activities: rt(
@@ -220,7 +245,7 @@ async function run() {
     locale: 'en',
     data: {
       intro:
-        'A day at Les Lucioles follows a steady, reassuring rhythm, adjusted for each age group — here is what it looks like for the older children.',
+        'A day at La Voie lactée follows a steady, reassuring rhythm, adjusted for each age group — here is what it looks like for the older children. (Demonstration schedule.)',
       dailySchedule: [
         { time: '7 a.m.', moment: 'Gentle arrival and quiet play' },
         { time: '8:30', moment: 'Snack and morning circle' },
@@ -233,7 +258,7 @@ async function run() {
         { time: '5 p.m.', moment: 'Departures and goodbyes' },
       ],
       meals: rt(
-        'All meals and snacks are prepared on site by our cook. Weekly menus follow Canada’s Food Guide and are adapted to each child’s allergies and intolerances.',
+        'All meals and snacks are prepared on site. Weekly menus follow Canada’s Food Guide and are adapted to each child’s allergies and intolerances.',
         'Infants keep their own schedule of bottles and purées, in continuity with home routines.',
       ),
       activities: rt(
@@ -249,12 +274,12 @@ async function run() {
     locale: 'fr',
     data: {
       intro: rt(
-        'Comme tous les CPE du Québec, Les Lucioles accueille les enfants à partir du guichet unique La Place 0-5. Voici comment cela fonctionne, sans mystère.',
+        'Comme tous les CPE du Québec, La Voie lactée accueille les enfants à partir du guichet unique La Place 0-5. Voici comment cela fonctionne, sans mystère.',
       ),
       steps: [
         {
           title: 'Inscrivez votre enfant sur La Place 0-5',
-          text: 'L’inscription au guichet unique est gratuite et peut se faire dès la grossesse. Sélectionnez les installations qui vous conviennent, dont le CPE Les Lucioles.',
+          text: 'L’inscription au guichet unique est gratuite et peut se faire dès la grossesse. Sélectionnez les installations qui vous conviennent, dont le CPE La Voie lactée.',
         },
         {
           title: 'Nous vous contactons quand une place se libère',
@@ -278,12 +303,12 @@ async function run() {
     locale: 'en',
     data: {
       intro: rt(
-        'Like every CPE in Québec, Les Lucioles admits children through the single waiting list La Place 0-5. Here is how it works — no mystery.',
+        'Like every CPE in Québec, La Voie lactée admits children through the single waiting list La Place 0-5. Here is how it works — no mystery.',
       ),
       steps: [
         {
           title: 'Register your child on La Place 0-5',
-          text: 'Registration on the single waiting list is free and can be done as early as pregnancy. Select the facilities that suit you, including CPE Les Lucioles.',
+          text: 'Registration on the single waiting list is free and can be done as early as pregnancy. Select the facilities that suit you, including CPE La Voie lactée.',
         },
         {
           title: 'We contact you when a spot opens',
@@ -308,7 +333,7 @@ async function run() {
     locale: 'fr',
     data: {
       intro: rt(
-        'Travailler aux Lucioles, c’est rejoindre une petite équipe stable qui se soutient, dans un milieu où la qualité passe avant la cadence. Nous cherchons des personnes qui aiment profondément la petite enfance — et nous prenons soin d’elles.',
+        'Travailler à La Voie lactée, c’est rejoindre une petite équipe stable qui se soutient, dans un milieu où la qualité passe avant la cadence. Nous cherchons des personnes qui aiment profondément la petite enfance — et nous prenons soin d’elles. (Contenu de démonstration.)',
       ),
       perks: [
         { text: 'Salaire selon l’échelle du réseau des CPE' },
@@ -324,7 +349,7 @@ async function run() {
     locale: 'en',
     data: {
       intro: rt(
-        'Working at Les Lucioles means joining a small, stable team that supports one another, in a place where quality comes before speed. We look for people who deeply love early childhood — and we take care of them.',
+        'Working at La Voie lactée means joining a small, stable team that supports one another, in a place where quality comes before speed. We look for people who deeply love early childhood — and we take care of them. (Demonstration content.)',
       ),
       perks: [
         { text: 'Salary on the CPE network scale' },
@@ -340,21 +365,23 @@ async function run() {
   const faqs = [
     {
       category: 'admission',
+      audience: 'public',
       fr: {
         question: 'Comment inscrire mon enfant au CPE ?',
         answer: rt(
-          'Toutes les admissions passent par le guichet unique La Place 0-5 (laplace0-5.com). Inscrivez-y votre enfant gratuitement et sélectionnez le CPE Les Lucioles ; nous vous contactons directement lorsqu’une place correspondant à son âge se libère.',
+          'Toutes les admissions passent par le guichet unique La Place 0-5 (laplace0-5.com). Inscrivez-y votre enfant gratuitement et sélectionnez le CPE La Voie lactée ; nous vous contactons directement lorsqu’une place correspondant à son âge se libère.',
         ),
       },
       en: {
         question: 'How do I register my child at the CPE?',
         answer: rt(
-          'All admissions go through the single waiting list La Place 0-5 (laplace0-5.com). Register your child there for free and select CPE Les Lucioles; we contact you directly when a spot matching their age opens.',
+          'All admissions go through the single waiting list La Place 0-5 (laplace0-5.com). Register your child there for free and select CPE La Voie lactée; we contact you directly when a spot matching their age opens.',
         ),
       },
     },
     {
       category: 'admission',
+      audience: 'public',
       fr: {
         question: 'À partir de quel âge accueillez-vous les enfants ?',
         answer: rt('Nous accueillons les enfants de 6 mois jusqu’à leur entrée à la maternelle, vers 5 ans.'),
@@ -366,6 +393,7 @@ async function run() {
     },
     {
       category: 'quotidien',
+      audience: 'public',
       fr: {
         question: 'Que dois-je apporter chaque jour ?',
         answer: rt(
@@ -381,17 +409,19 @@ async function run() {
     },
     {
       category: 'quotidien',
+      audience: 'public',
       fr: {
         question: 'Quelles sont vos heures d’ouverture ?',
-        answer: rt('Le CPE est ouvert du lundi au vendredi, de 7 h à 18 h.'),
+        answer: rt('Le CPE est ouvert du lundi au vendredi, de 7 h à 18 h. (Horaire de démonstration.)'),
       },
       en: {
         question: 'What are your opening hours?',
-        answer: rt('The CPE is open Monday to Friday, 7 a.m. to 6 p.m.'),
+        answer: rt('The CPE is open Monday to Friday, 7 a.m. to 6 p.m. (Demonstration hours.)'),
       },
     },
     {
       category: 'sante',
+      audience: 'public',
       fr: {
         question: 'Que se passe-t-il si mon enfant est malade ?',
         answer: rt(
@@ -407,6 +437,7 @@ async function run() {
     },
     {
       category: 'alimentation',
+      audience: 'public',
       fr: {
         question: 'Les repas sont-ils fournis ? Gérez-vous les allergies ?',
         answer: rt(
@@ -422,6 +453,7 @@ async function run() {
     },
     {
       category: 'general',
+      audience: 'public',
       fr: {
         question: 'Quel est le tarif ?',
         answer: rt(
@@ -437,6 +469,7 @@ async function run() {
     },
     {
       category: 'general',
+      audience: 'public',
       fr: {
         question: 'Publiez-vous des photos des enfants ?',
         answer: rt(
@@ -450,6 +483,22 @@ async function run() {
         ),
       },
     },
+    {
+      category: 'quotidien',
+      audience: 'portal',
+      fr: {
+        question: 'Comment signaler une absence ?',
+        answer: rt(
+          'Téléphonez-nous ou écrivez-nous avant 9 h le matin même. Pour une absence prolongée (vacances, maladie), prévenez l’éducatrice de votre groupe dès que possible.',
+        ),
+      },
+      en: {
+        question: 'How do I report an absence?',
+        answer: rt(
+          'Call or email us before 9 a.m. that morning. For a longer absence (vacation, illness), let your group’s educator know as soon as possible.',
+        ),
+      },
+    },
   ] as const
 
   for (const [i, f] of faqs.entries()) {
@@ -459,7 +508,7 @@ async function run() {
       data: {
         ...f.fr,
         category: f.category,
-        audience: 'public',
+        audience: f.audience,
         order: i,
         demoSeed: true,
         _status: 'published',
@@ -473,7 +522,7 @@ async function run() {
     })
   }
 
-  // ---- Closures (relative to today so the demo always shows upcoming dates) ----
+  // ---- Closures ----
   const year = new Date().getFullYear()
   const closures = [
     { fr: 'Journée pédagogique', en: 'Pedagogical day', start: `${year}-08-21` },
@@ -490,27 +539,27 @@ async function run() {
     await payload.update({ collection: 'closure-dates', id: doc.id, locale: 'en', data: { label: c.en } })
   }
 
-  // ---- Team (fictional, consent flagged true for demo) ----
+  // ---- Team (fictional, consent flagged for demo) ----
   const team = [
     {
-      name: 'Marie-Claude Demers',
-      fr: { jobTitle: 'Directrice générale', bio: 'Éducatrice de formation, elle veille depuis quinze ans à ce que chaque famille se sente chez elle aux Lucioles.' },
-      en: { jobTitle: 'Executive Director', bio: 'An educator by training, she has spent fifteen years making sure every family feels at home at Les Lucioles.' },
+      name: 'Marie-Claude Demers (démo)',
+      fr: { jobTitle: 'Directrice générale', bio: 'Éducatrice de formation, elle veille depuis quinze ans à ce que chaque famille se sente chez elle. (Profil fictif de démonstration.)' },
+      en: { jobTitle: 'Executive Director', bio: 'An educator by training, she has spent fifteen years making sure every family feels at home. (Fictional demonstration profile.)' },
     },
     {
-      name: 'Amina Berrada',
-      fr: { jobTitle: 'Directrice adjointe', bio: 'Elle orchestre le quotidien du CPE — horaires, remplacements et mille petites attentions.' },
-      en: { jobTitle: 'Assistant Director', bio: 'She orchestrates the CPE’s daily life — schedules, substitutions, and a thousand small kindnesses.' },
+      name: 'Amina Berrada (démo)',
+      fr: { jobTitle: 'Directrice adjointe', bio: 'Elle orchestre le quotidien du CPE — horaires, remplacements et mille petites attentions. (Profil fictif de démonstration.)' },
+      en: { jobTitle: 'Assistant Director', bio: 'She orchestrates the CPE’s daily life — schedules, substitutions, and a thousand small kindnesses. (Fictional demonstration profile.)' },
     },
     {
-      name: 'Julie Tremblay-Roy',
-      fr: { jobTitle: 'Éducatrice — poupons', bio: 'Spécialiste des tout-petits, elle transforme chaque routine en moment de complicité.' },
-      en: { jobTitle: 'Educator — infants', bio: 'A specialist of the very young, she turns every routine into a moment of connection.' },
+      name: 'Julie Tremblay-Roy (démo)',
+      fr: { jobTitle: 'Éducatrice — poupons', bio: 'Spécialiste des tout-petits, elle transforme chaque routine en moment de complicité. (Profil fictif de démonstration.)' },
+      en: { jobTitle: 'Educator — infants', bio: 'A specialist of the very young, she turns every routine into a moment of connection. (Fictional demonstration profile.)' },
     },
     {
-      name: 'Gabriel Sansregret',
-      fr: { jobTitle: 'Cuisinier', bio: 'Derrière ses potages et ses muffins se cache la personne la plus populaire du CPE.' },
-      en: { jobTitle: 'Cook', bio: 'Behind his soups and muffins hides the most popular person at the CPE.' },
+      name: 'Gabriel Sansregret (démo)',
+      fr: { jobTitle: 'Cuisinier', bio: 'Derrière ses potages et ses muffins se cache la personne la plus populaire du CPE. (Profil fictif de démonstration.)' },
+      en: { jobTitle: 'Cook', bio: 'Behind his soups and muffins hides the most popular person at the CPE. (Fictional demonstration profile.)' },
     },
   ]
   for (const [i, m] of team.entries()) {
@@ -529,13 +578,13 @@ async function run() {
       fr: {
         title: 'Éducatrice ou éducateur qualifié·e',
         description: rt(
-          'Poste permanent à temps plein auprès du groupe des 3-4 ans. Nous cherchons une personne qualifiée (DEC ou AEC en éducation à l’enfance), douce et fiable, qui a envie de s’installer durablement dans une équipe qui se soutient.',
+          'Poste permanent à temps plein auprès du groupe des 3-4 ans. Nous cherchons une personne qualifiée (DEC ou AEC en éducation à l’enfance), douce et fiable. (Affichage de démonstration.)',
         ),
       },
       en: {
         title: 'Qualified educator',
         description: rt(
-          'Permanent full-time position with the 3–4 year-old group. We are looking for a qualified person (DEC or AEC in early childhood education), gentle and reliable, ready to settle into a team that supports one another.',
+          'Permanent full-time position with the 3–4 year-old group. We are looking for a qualified person (DEC or AEC in early childhood education), gentle and reliable. (Demonstration posting.)',
         ),
       },
     },
@@ -543,15 +592,11 @@ async function run() {
       schedule: 'sub' as const,
       fr: {
         title: 'Éducatrice ou éducateur — banque de remplacement',
-        description: rt(
-          'Horaires variables selon vos disponibilités. Une belle porte d’entrée pour découvrir notre équipe et notre milieu.',
-        ),
+        description: rt('Horaires variables selon vos disponibilités. Une belle porte d’entrée pour découvrir notre équipe. (Affichage de démonstration.)'),
       },
       en: {
         title: 'Educator — substitute bank',
-        description: rt(
-          'Variable hours based on your availability. A great way to get to know our team and our environment.',
-        ),
+        description: rt('Variable hours based on your availability. A great way to get to know our team. (Demonstration posting.)'),
       },
     },
   ]
@@ -564,60 +609,225 @@ async function run() {
     await payload.update({ collection: 'job-openings', id: doc.id, locale: 'en', data: { ...j.en, _status: 'published' } })
   }
 
-  // ---- Sample activities & announcements (admin/portal demo only — never public) ----
-  const in7 = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10)
-  const in14 = new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10)
+  // ---- Activity illustrations ----
+  console.log('Generating demo illustrations…')
+  const img = {
+    piscine: await uploadIllustration(payload, 'piscine', 'Illustration : journée de jeux d’eau', 'Illustration: water play day'),
+    zoo: await uploadIllustration(payload, 'zoo', 'Illustration : sortie au zoo', 'Illustration: zoo outing'),
+    parc: await uploadIllustration(payload, 'parc', 'Illustration : sortie au parc', 'Illustration: park outing'),
+    peinture: await uploadIllustration(payload, 'peinture', 'Illustration : atelier de peinture', 'Illustration: painting workshop'),
+    musique: await uploadIllustration(payload, 'musique', 'Illustration : éveil musical', 'Illustration: musical awakening'),
+    jardinage: await uploadIllustration(payload, 'jardinage', 'Illustration : jardinage dans la cour', 'Illustration: gardening in the yard'),
+    histoires: await uploadIllustration(payload, 'histoires', 'Illustration : l’heure du conte', 'Illustration: story time'),
+    motricite: await uploadIllustration(payload, 'motricite', 'Illustration : parcours de motricité', 'Illustration: motor-skills course'),
+    pique_nique: await uploadIllustration(payload, 'pique_nique', 'Illustration : pique-nique', 'Illustration: picnic'),
+  }
 
-  const actA = await payload.create({
-    collection: 'activities',
-    locale: 'fr',
-    data: {
-      title: 'Journée de l’eau',
-      groups: [groupIds[2], groupIds[3], groupIds[4]],
-      date: in7,
-      description: rt('Jeux d’eau dans la cour toute la matinée — prévoir de la crème solaire appliquée avant l’arrivée.'),
-      checklist: [{ item: 'Maillot de bain' }, { item: 'Serviette' }, { item: 'Gourde d’eau' }, { item: 'Chapeau' }],
-      demoSeed: true,
-      _status: 'published',
+  // ---- Activities (mix of public showcase and portal-only) ----
+  const activities: {
+    date: string
+    endDate?: string
+    visibility: 'public' | 'portal'
+    image: number
+    groups: number[]
+    fr: { title: string; description: ReturnType<typeof rt>; importantNote?: string; checklist?: { item: string }[] }
+    en: { title: string; description: ReturnType<typeof rt>; importantNote?: string; checklist?: { item: string }[] }
+  }[] = [
+    {
+      date: day(3),
+      visibility: 'public',
+      image: img.piscine,
+      groups: [papillons, renardeaux, explorateurs],
+      fr: {
+        title: 'Journée de jeux d’eau',
+        description: rt('Toute la matinée, la cour se transforme en petite plage : jeux d’eau, bulles géantes et parcours arrosé pour les plus braves.'),
+        importantNote: 'Appliquez la crème solaire avant l’arrivée. Les jeux d’eau seront remis au lendemain en cas de pluie.',
+        checklist: [{ item: 'Maillot de bain' }, { item: 'Serviette' }, { item: 'Gourde d’eau' }, { item: 'Chapeau ou casquette' }],
+      },
+      en: {
+        title: 'Water play day',
+        description: rt('All morning, the yard becomes a little beach: water games, giant bubbles and a splash course for the bravest.'),
+        importantNote: 'Apply sunscreen before arrival. Water games move to the next day in case of rain.',
+        checklist: [{ item: 'Swimsuit' }, { item: 'Towel' }, { item: 'Water bottle' }, { item: 'Hat or cap' }],
+      },
     },
-  })
-  await payload.update({
-    collection: 'activities',
-    id: actA.id,
-    locale: 'en',
-    data: {
-      title: 'Water Day',
-      description: rt('Water games in the yard all morning — please apply sunscreen before arrival.'),
-      checklist: [{ item: 'Swimsuit' }, { item: 'Towel' }, { item: 'Water bottle' }, { item: 'Hat' }],
-      _status: 'published',
+    {
+      date: day(6),
+      visibility: 'public',
+      image: img.zoo,
+      groups: [renardeaux, explorateurs],
+      fr: {
+        title: 'Sortie au zoo',
+        description: rt('Grande sortie en autobus pour rencontrer les girafes, les loutres et les flamants roses. Départ après la collation du matin, retour pour la sieste.'),
+        importantNote: 'Le formulaire d’autorisation de sortie doit être signé au plus tard la veille.',
+        checklist: [{ item: 'Chaussures confortables' }, { item: 'Chapeau' }, { item: 'Vêtements selon la météo' }],
+      },
+      en: {
+        title: 'Zoo outing',
+        description: rt('A big bus outing to meet the giraffes, otters and flamingos. Departure after morning snack, back in time for nap.'),
+        importantNote: 'The outing authorization form must be signed no later than the day before.',
+        checklist: [{ item: 'Comfortable shoes' }, { item: 'Hat' }, { item: 'Weather-appropriate clothes' }],
+      },
     },
-  })
+    {
+      date: day(8),
+      visibility: 'public',
+      image: img.peinture,
+      groups: [lapinots, papillons],
+      fr: {
+        title: 'Atelier grand format : peindre comme les grands',
+        description: rt('Chevalets géants, pinceaux, éponges et beaucoup de couleurs : un atelier d’expression libre inspiré des ateliers d’artistes.'),
+        checklist: [{ item: 'Vêtements qui peuvent se salir' }],
+      },
+      en: {
+        title: 'Big-format workshop: painting like the grown-ups',
+        description: rt('Giant easels, brushes, sponges and lots of colour: a free-expression workshop inspired by artists’ studios.'),
+        checklist: [{ item: 'Clothes that can get messy' }],
+      },
+    },
+    {
+      date: day(10),
+      visibility: 'public',
+      image: img.pique_nique,
+      groups: [poussins, lapinots],
+      fr: {
+        title: 'Pique-nique des tout-petits au parc',
+        description: rt('Petite promenade en poussettes jusqu’au parc voisin, collation sur la grande couverture et retour avant la sieste.'),
+        checklist: [{ item: 'Chapeau' }, { item: 'Vêtements de rechange' }],
+      },
+      en: {
+        title: 'Little ones’ picnic at the park',
+        description: rt('A short stroller walk to the nearby park, snack on the big blanket, and back before nap time.'),
+        checklist: [{ item: 'Hat' }, { item: 'Spare clothes' }],
+      },
+    },
+    {
+      date: day(13),
+      visibility: 'public',
+      image: img.musique,
+      groups: [poussins, lapinots, papillons, renardeaux, explorateurs],
+      fr: {
+        title: 'Éveil musical avec instruments',
+        description: rt('Une musicienne invitée fait découvrir tambourins, maracas et petites percussions à tous les groupes, chacun à son tour.'),
+      },
+      en: {
+        title: 'Musical awakening with instruments',
+        description: rt('A guest musician introduces tambourines, maracas and small percussion to every group, one at a time.'),
+      },
+    },
+    {
+      date: day(15),
+      visibility: 'portal',
+      image: img.jardinage,
+      groups: [papillons],
+      fr: {
+        title: 'Jardinage : on plante nos fines herbes',
+        description: rt('Les Papillons mettent les mains dans la terre : basilic, menthe et ciboulette rejoindront le potager de la cour.'),
+        checklist: [{ item: 'Vêtements qui peuvent se salir' }],
+      },
+      en: {
+        title: 'Gardening: planting our herbs',
+        description: rt('The Papillons get their hands in the soil: basil, mint and chives join the yard’s vegetable garden.'),
+        checklist: [{ item: 'Clothes that can get messy' }],
+      },
+    },
+    {
+      date: day(17),
+      visibility: 'portal',
+      image: img.histoires,
+      groups: [poussins],
+      fr: {
+        title: 'L’heure du conte en pyjama',
+        description: rt('Matinée douce pour les Poussins : histoires, marionnettes et chansons dans le coin lecture.'),
+        checklist: [{ item: 'Pyjama confortable' }, { item: 'Doudou' }],
+      },
+      en: {
+        title: 'Story time in pyjamas',
+        description: rt('A gentle morning for the Poussins: stories, puppets and songs in the reading corner.'),
+        checklist: [{ item: 'Comfortable pyjamas' }, { item: 'Comfort blanket' }],
+      },
+    },
+    {
+      date: day(21),
+      visibility: 'public',
+      image: img.motricite,
+      groups: [renardeaux, explorateurs],
+      fr: {
+        title: 'Grand parcours de motricité',
+        description: rt('Tunnels, cerceaux, poutres et trampoline doux : un parcours géant installé dans la salle de motricité pour bouger, grimper et sauter.'),
+      },
+      en: {
+        title: 'Giant motor-skills course',
+        description: rt('Tunnels, hoops, beams and a soft trampoline: a giant course set up in the motor-skills room to move, climb and jump.'),
+      },
+    },
+  ]
 
-  const actB = await payload.create({
-    collection: 'activities',
-    locale: 'fr',
-    data: {
-      title: 'Pique-nique des Poussins au parc',
-      groups: [groupIds[0], groupIds[1]],
-      date: in14,
-      description: rt('Petite sortie au parc voisin avec les poussettes — retour avant la sieste.'),
-      checklist: [{ item: 'Chapeau' }, { item: 'Vêtements de rechange' }],
-      demoSeed: true,
-      _status: 'published',
-    },
-  })
-  await payload.update({
-    collection: 'activities',
-    id: actB.id,
-    locale: 'en',
-    data: {
-      title: 'Poussins picnic at the park',
-      description: rt('A short stroller outing to the nearby park — back before nap time.'),
-      checklist: [{ item: 'Hat' }, { item: 'Spare clothes' }],
-      _status: 'published',
-    },
-  })
+  for (const a of activities) {
+    const doc = await payload.create({
+      collection: 'activities',
+      locale: 'fr',
+      data: {
+        title: a.fr.title,
+        description: a.fr.description,
+        importantNote: a.fr.importantNote,
+        checklist: a.fr.checklist,
+        date: a.date,
+        endDate: a.endDate,
+        visibility: a.visibility,
+        image: a.image,
+        groups: a.groups,
+        demoSeed: true,
+        _status: 'published',
+      },
+    })
+    await payload.update({
+      collection: 'activities',
+      id: doc.id,
+      locale: 'en',
+      data: {
+        title: a.en.title,
+        description: a.en.description,
+        importantNote: a.en.importantNote,
+        checklist: a.en.checklist,
+        _status: 'published',
+      },
+    })
+  }
 
+  // ---- Gallery: past activities (consent-confirmed demo illustrations) ----
+  console.log('Seeding gallery…')
+  const galleryDefs = [
+    { theme: 'parc', at: day(-6), fr: 'Cerfs-volants au parc — que du vent et des sourires', en: 'Kites at the park — nothing but wind and smiles' },
+    { theme: 'peinture', at: day(-12), fr: 'Nos artistes ont repeint le mois de juin', en: 'Our artists repainted the month of June' },
+    { theme: 'jardinage', at: day(-19), fr: 'Les premières pousses du potager', en: 'The vegetable garden’s first sprouts' },
+    { theme: 'musique', at: day(-26), fr: 'Fanfare improvisée dans la salle de motricité', en: 'Improvised fanfare in the motor-skills room' },
+    { theme: 'histoires', at: day(-33), fr: 'L’heure du conte sous les étoiles en feutrine', en: 'Story time under felt stars' },
+    { theme: 'motricite', at: day(-40), fr: 'Le grand parcours des petits champions', en: 'The little champions’ big course' },
+  ]
+  for (const g of galleryDefs) {
+    const data = await renderIllustration(g.theme)
+    const doc = await payload.create({
+      collection: 'gallery-photos',
+      locale: 'fr',
+      data: {
+        caption: g.fr,
+        takenAt: g.at,
+        consentConfirmed: true,
+        demoSeed: true,
+        _status: 'published',
+      },
+      file: { data, mimetype: 'image/png', name: `demo-galerie-${g.theme}.png`, size: data.length },
+    })
+    await payload.update({
+      collection: 'gallery-photos',
+      id: doc.id,
+      locale: 'en',
+      data: { caption: g.en, _status: 'published' },
+    })
+  }
+
+  // ---- Announcement ----
   const ann = await payload.create({
     collection: 'announcements',
     locale: 'fr',
@@ -642,7 +852,7 @@ async function run() {
   })
 
   console.log('')
-  console.log('✔ Demo seed complete (all documents flagged demoSeed: true).')
+  console.log('✔ Demo seed complete — « CPE La Voie lactée » (all content fictional, flagged demoSeed).')
   console.log('')
   console.log(`  Admin (demo director): ${DEMO_DIRECTOR_EMAIL}`)
   console.log(`  Password:              ${DEMO_DIRECTOR_PASSWORD}`)

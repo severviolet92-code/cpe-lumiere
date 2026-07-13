@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
+import { ActivityCard } from '../../../components/ActivityCard'
 import { HeroScene } from '../../../components/HeroScene'
 import { Reveal } from '../../../components/Reveal'
 import { RichTextBlock } from '../../../components/RichTextBlock'
@@ -33,8 +34,18 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
   const today = new Date().toISOString().slice(0, 10)
 
-  const [home, groups, closures, faqTeaser] = await Promise.all([
+  const [home, upcomingActivities, groups, closures, faqTeaser] = await Promise.all([
     payload.findGlobal({ slug: 'home-page', locale, overrideAccess: false }),
+    payload.find({
+      collection: 'activities',
+      where: {
+        or: [{ date: { greater_than_equal: today } }, { endDate: { greater_than_equal: today } }],
+      },
+      sort: 'date',
+      limit: 3,
+      locale,
+      overrideAccess: false,
+    }),
     payload.find({
       collection: 'groups',
       where: { active: { equals: true } },
@@ -99,6 +110,35 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           {dict.home.scrollHint} ↓
         </div>
       </section>
+
+      {/* ---- Upcoming activities: the core experience, first after the hero ---- */}
+      {upcomingActivities.docs.length > 0 && (
+        <section className="section section--warm">
+          <div className="container">
+            <Reveal>
+              <div
+                className="section-head"
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem', maxWidth: 'none' }}
+              >
+                <div>
+                  <p className="eyebrow eyebrow--terracotta">{dict.activities.homeEyebrow}</p>
+                  <h2 style={{ marginBottom: 0 }}>{dict.activities.homeTitle}</h2>
+                </div>
+                <Link className="btn btn--ghost" href={localizedPath(locale, '/activites')}>
+                  {dict.activities.seeAll} →
+                </Link>
+              </div>
+            </Reveal>
+            <Reveal>
+              <div className="activity-grid activity-grid--featured">
+                {upcomingActivities.docs.map((a) => (
+                  <ActivityCard key={a.id} activity={a} locale={locale} featured />
+                ))}
+              </div>
+            </Reveal>
+          </div>
+        </section>
+      )}
 
       {/* ---- Intro + highlights ---- */}
       {(home?.introTitle || (home?.highlights?.length ?? 0) > 0) && (

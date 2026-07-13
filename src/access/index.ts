@@ -35,3 +35,24 @@ export const publicAudiencePublishedOnly: Access = ({ req }) => {
 }
 
 export const developerFieldOnly: FieldAccess = ({ req }) => req.user?.role === 'developer'
+
+/**
+ * Activities: admin sees all; a parent sees published activities of their own
+ * group(s) only; the public sees only activities the director explicitly marked
+ * `visibility: public` (and published). Private by default.
+ */
+export const activitiesRead: Access = ({ req }) => {
+  if (req.user?.collection === 'users') return true
+  if (req.user?.collection === 'parents') {
+    const groups = (req.user as { groups?: (number | { id: number })[] }).groups || []
+    const groupIds = groups.map((g) => (typeof g === 'object' ? g.id : g))
+    const where: Where = {
+      and: [{ groups: { in: groupIds } }, { _status: { equals: 'published' } }],
+    }
+    return where
+  }
+  const where: Where = {
+    and: [{ visibility: { equals: 'public' } }, { _status: { equals: 'published' } }],
+  }
+  return where
+}

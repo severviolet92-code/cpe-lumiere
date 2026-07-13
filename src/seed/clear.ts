@@ -11,6 +11,7 @@ import { getPayload } from 'payload'
 import config from '../payload.config'
 
 const COLLECTIONS = [
+  'gallery-photos',
   'activities',
   'announcements',
   'closure-dates',

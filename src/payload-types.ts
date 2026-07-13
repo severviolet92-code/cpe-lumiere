@@ -77,6 +77,7 @@ export interface Config {
     documents: Document;
     'staff-profiles': StaffProfile;
     'job-openings': JobOpening;
+    'gallery-photos': GalleryPhoto;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -94,6 +95,7 @@ export interface Config {
     documents: DocumentsSelect<false> | DocumentsSelect<true>;
     'staff-profiles': StaffProfilesSelect<false> | StaffProfilesSelect<true>;
     'job-openings': JobOpeningsSelect<false> | JobOpeningsSelect<true>;
+    'gallery-photos': GalleryPhotosSelect<false> | GalleryPhotosSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -245,7 +247,7 @@ export interface Group {
   createdAt: string;
 }
 /**
- * Group activities with preparation checklists. Never shown on the public website. Never include personal information about a child.
+ * Group activities with preparation checklists. Private by default (parent portal); public only if you explicitly choose so. Never include personal information about a child.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "activities".
@@ -253,8 +255,18 @@ export interface Group {
 export interface Activity {
   id: number;
   title: string;
+  /**
+   * Activities are private by default. Make an activity public only when you consciously choose to show it to everyone.
+   */
+  visibility: 'portal' | 'public';
+  image?: (number | null) | Media;
   groups: (number | Group)[];
   date: string;
+  endDate?: string | null;
+  /**
+   * Shown prominently: essential instructions for parents.
+   */
+  importantNote?: string | null;
   description?: {
     root: {
       type: string;
@@ -435,6 +447,50 @@ export interface JobOpening {
   _status?: ('draft' | 'published') | null;
 }
 /**
+ * Images of past activities, publicly visible ONLY after confirming no child is identifiable and distribution is authorized.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "gallery-photos".
+ */
+export interface GalleryPhoto {
+  id: number;
+  caption: string;
+  takenAt: string;
+  activity?: (number | null) | Activity;
+  consentConfirmed?: boolean | null;
+  demoSeed?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+  sizes?: {
+    card?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    large?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+  };
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -497,6 +553,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'job-openings';
         value: number | JobOpening;
+      } | null)
+    | ({
+        relationTo: 'gallery-photos';
+        value: number | GalleryPhoto;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -637,8 +697,12 @@ export interface GroupsSelect<T extends boolean = true> {
  */
 export interface ActivitiesSelect<T extends boolean = true> {
   title?: T;
+  visibility?: T;
+  image?: T;
   groups?: T;
   date?: T;
+  endDate?: T;
+  importantNote?: T;
   description?: T;
   checklist?:
     | T
@@ -743,6 +807,53 @@ export interface JobOpeningsSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "gallery-photos_select".
+ */
+export interface GalleryPhotosSelect<T extends boolean = true> {
+  caption?: T;
+  takenAt?: T;
+  activity?: T;
+  consentConfirmed?: T;
+  demoSeed?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+  sizes?:
+    | T
+    | {
+        card?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        large?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+      };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

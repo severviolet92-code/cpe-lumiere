@@ -9,6 +9,7 @@ export const ui = {
     skipToContent: 'Aller au contenu',
     nav: {
       home: 'Accueil',
+      activities: 'Activités',
       about: 'Notre CPE',
       life: 'La vie au CPE',
       admission: 'Admission',
@@ -16,6 +17,29 @@ export const ui = {
       careers: 'Carrières',
       contact: 'Nous joindre',
       portal: 'Portail parents',
+    },
+    activities: {
+      title: 'Activités',
+      heroTitle: 'Ce qui s’en vient',
+      heroLede:
+        'Sorties, ateliers et petites fêtes : voici la vie du CPE, telle qu’elle se prépare.',
+      next15: 'Les 15 prochains jours',
+      later: 'Un peu plus tard',
+      forGroups: 'Pour',
+      allGroups: 'Tous les groupes',
+      toBring: 'À apporter',
+      important: 'Important',
+      seeAll: 'Toutes les activités',
+      homeEyebrow: 'Prochaines activités',
+      homeTitle: 'La vie du CPE, en ce moment',
+      emptyUpcoming: 'Aucune activité publique à l’horaire pour l’instant — revenez bientôt !',
+      portalNote:
+        'Les activités propres au groupe de votre enfant, avec toutes les consignes, se trouvent dans le portail parents.',
+      galleryTitle: 'Nos souvenirs',
+      galleryEyebrow: 'Activités passées',
+      galleryIntro:
+        'Quelques images de la vie au CPE. Aucune photo permettant d’identifier un enfant n’est jamais publiée.',
+      multiDay: 'au',
     },
     home: {
       discover: 'Découvrir notre CPE',
@@ -105,6 +129,7 @@ export const ui = {
     skipToContent: 'Skip to content',
     nav: {
       home: 'Home',
+      activities: 'Activities',
       about: 'Our CPE',
       life: 'Life at the CPE',
       admission: 'Admission',
@@ -112,6 +137,28 @@ export const ui = {
       careers: 'Careers',
       contact: 'Contact us',
       portal: 'Parent portal',
+    },
+    activities: {
+      title: 'Activities',
+      heroTitle: 'What’s coming up',
+      heroLede: 'Outings, workshops and little celebrations: here is the life of the CPE as it takes shape.',
+      next15: 'The next 15 days',
+      later: 'A little later',
+      forGroups: 'For',
+      allGroups: 'All groups',
+      toBring: 'To bring',
+      important: 'Important',
+      seeAll: 'All activities',
+      homeEyebrow: 'Upcoming activities',
+      homeTitle: 'Life at the CPE, right now',
+      emptyUpcoming: 'No public activities scheduled at the moment — check back soon!',
+      portalNote:
+        'Your child’s group-specific activities, with all instructions, live in the parent portal.',
+      galleryTitle: 'Our memories',
+      galleryEyebrow: 'Past activities',
+      galleryIntro:
+        'A few images of life at the CPE. No photo that could identify a child is ever published.',
+      multiDay: 'to',
     },
     home: {
       discover: 'Discover our CPE',

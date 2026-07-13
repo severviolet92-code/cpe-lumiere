@@ -533,6 +533,224 @@ summary:focus-visible {
 .chip--lavande { background: var(--lavande-whisper); color: var(--lavande-deep); }
 .chip--lavande .group-chip__dot { background: var(--lavande); }
 
+/* ---------- Activity cards ---------- */
+
+.activity-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(330px, 100%), 1fr));
+  gap: 1.6rem;
+}
+
+.activity-grid--featured {
+  grid-template-columns: repeat(auto-fit, minmax(min(330px, 100%), 1fr));
+}
+
+.activity-card {
+  background: #fffdf8;
+  border: 1px solid rgba(56, 41, 26, 0.08);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 6px 24px -18px rgba(88, 60, 20, 0.25);
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.activity-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lift);
+}
+
+.activity-card__media {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: var(--paper-warm);
+}
+
+.activity-card__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.activity-card__media-fallback {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  font-size: 3rem;
+}
+
+.date-badge {
+  position: absolute;
+  top: 0.9rem;
+  left: 0.9rem;
+  background: var(--glass);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(56, 41, 26, 0.1);
+  border-radius: 14px;
+  padding: 0.45rem 0.8rem 0.5rem;
+  text-align: center;
+  line-height: 1.05;
+  box-shadow: 0 8px 20px -12px rgba(88, 60, 20, 0.5);
+}
+
+.date-badge__day {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 620;
+  color: var(--ink);
+}
+
+.date-badge__month {
+  display: block;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--honey-deep);
+}
+
+.activity-card__body {
+  padding: 1.4rem 1.5rem 1.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.activity-card__body h3 {
+  margin: 0;
+}
+
+.activity-card__date {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--honey-deep);
+}
+
+.activity-card__groups {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.activity-card__groups-label,
+.activity-card__bring-label {
+  font-size: 0.82rem;
+  font-weight: 650;
+  color: var(--ink-faint);
+}
+
+.group-chip--sm {
+  padding: 0.28rem 0.75rem;
+  font-size: 0.82rem;
+}
+
+.activity-card__desc {
+  color: var(--ink-soft);
+  font-size: 0.97rem;
+}
+
+.activity-card__desc p:last-child {
+  margin-bottom: 0;
+}
+
+.important-note {
+  margin: 0;
+  background: var(--honey-whisper);
+  border-left: 4px solid var(--honey);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  font-size: 0.92rem;
+  color: var(--ink);
+}
+
+.checklist-pills {
+  list-style: none;
+  margin: 0.3rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.checklist-pills li {
+  background: var(--sauge-whisper);
+  color: var(--sauge-deep);
+  border-radius: var(--radius-pill);
+  padding: 0.3rem 0.85rem;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.checklist-pills li::before {
+  content: '✓ ';
+  opacity: 0.7;
+}
+
+/* ---------- Gallery ---------- */
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
+  gap: 1.2rem;
+}
+
+.gallery-item {
+  position: relative;
+  border-radius: var(--radius);
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  box-shadow: 0 6px 24px -18px rgba(88, 60, 20, 0.3);
+}
+
+.gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.gallery-item:hover img {
+  transform: scale(1.04);
+}
+
+.gallery-item figcaption {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 1.6rem 1.1rem 0.9rem;
+  background: linear-gradient(transparent, rgba(56, 41, 26, 0.72));
+  color: var(--cream, #fffaf0);
+  font-size: 0.9rem;
+  font-weight: 550;
+}
+
+.gallery-item figcaption time {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gallery-item img {
+    transition: none;
+  }
+  .activity-card {
+    transition: none;
+  }
+}
+
 /* ---------- FAQ accordion ---------- */
 
 .faq-item {

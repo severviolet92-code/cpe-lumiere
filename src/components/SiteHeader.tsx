@@ -10,6 +10,7 @@ import { t } from '../i18n/ui'
 import { BrandMark } from './BrandMark'
 
 const NAV_ITEMS = [
+  { path: '/activites', key: 'activities' },
   { path: '/notre-cpe', key: 'about' },
   { path: '/vie-au-cpe', key: 'life' },
   { path: '/admission', key: 'admission' },
