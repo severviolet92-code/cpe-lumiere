@@ -24,9 +24,10 @@ export const Users: CollectionConfig = {
   access: {
     // Only the director (or developer) manages accounts; staff can read the team list.
     create: isDirectorOrDev,
-    read: ({ req }) => Boolean(req.user),
+    // Admin users only — parents must never see staff accounts.
+    read: ({ req }) => req.user?.collection === 'users',
     update: ({ req, id }) => {
-      if (!req.user) return false
+      if (req.user?.collection !== 'users') return false
       if (req.user.role === 'director' || req.user.role === 'developer') return true
       return req.user.id === id // staff can edit their own profile only
     },
@@ -52,7 +53,9 @@ export const Users: CollectionConfig = {
       ],
       access: {
         // Nobody can grant themselves a higher role: only director/developer set roles.
-        update: ({ req }) => req.user?.role === 'director' || req.user?.role === 'developer',
+        update: ({ req }) =>
+          req.user?.collection === 'users' &&
+          (req.user.role === 'director' || req.user.role === 'developer'),
       },
     },
   ],

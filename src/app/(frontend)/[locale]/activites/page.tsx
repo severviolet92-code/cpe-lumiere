@@ -32,8 +32,9 @@ export default async function ActivitiesPage({ params }: { params: Promise<{ loc
   const dict = t(locale)
   const payload = await getPayload()
 
-  const today = new Date().toISOString().slice(0, 10)
-  const horizon = new Date(Date.now() + 15 * 86400000).toISOString().slice(0, 10)
+  const now = new Date()
+  const today = now.toISOString().slice(0, 10)
+  const horizon = new Date(now.getTime() + 15 * 86400000).toISOString().slice(0, 10)
 
   // overrideAccess: false → anonymous rules apply: only explicitly-public, published activities.
   const [upcoming, gallery] = await Promise.all([

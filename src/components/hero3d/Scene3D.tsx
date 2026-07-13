@@ -79,11 +79,14 @@ function Butterfly({
 function Dust() {
   const points = useRef<THREE.Points>(null)
   const positions = useMemo(() => {
+    // Deterministic pseudo-random spread (stable across renders, lint-pure).
+    let s = 1234567
+    const rand = () => ((s = (s * 16807) % 2147483647) / 2147483647)
     const arr = new Float32Array(42 * 3)
     for (let i = 0; i < 42; i++) {
-      arr[i * 3] = -1.2 + Math.random() * 2.4
-      arr[i * 3 + 1] = 0.2 + Math.random() * 2.4
-      arr[i * 3 + 2] = -0.6 + Math.random() * 1.6
+      arr[i * 3] = -1.2 + rand() * 2.4
+      arr[i * 3 + 1] = 0.2 + rand() * 2.4
+      arr[i * 3 + 2] = -0.6 + rand() * 1.6
     }
     return arr
   }, [])

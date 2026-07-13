@@ -18,6 +18,8 @@ import { Documents } from './collections/Documents'
 import { StaffProfiles } from './collections/StaffProfiles'
 import { JobOpenings } from './collections/JobOpenings'
 import { GalleryPhotos } from './collections/GalleryPhotos'
+import { Parents } from './collections/Parents'
+import { NotificationLog } from './collections/NotificationLog'
 import { globals } from './globals'
 
 const filename = fileURLToPath(import.meta.url)
@@ -51,6 +53,8 @@ export default buildConfig({
     StaffProfiles,
     JobOpenings,
     GalleryPhotos,
+    Parents,
+    NotificationLog,
   ],
   globals,
   editor: lexicalEditor(),

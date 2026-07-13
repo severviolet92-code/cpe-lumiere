@@ -64,6 +64,7 @@ export type SupportedTimezones =
 export interface Config {
   auth: {
     users: UserAuthOperations;
+    parents: ParentAuthOperations;
   };
   blocks: {};
   collections: {
@@ -78,6 +79,8 @@ export interface Config {
     'staff-profiles': StaffProfile;
     'job-openings': JobOpening;
     'gallery-photos': GalleryPhoto;
+    parents: Parent;
+    'notification-log': NotificationLog;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -96,6 +99,8 @@ export interface Config {
     'staff-profiles': StaffProfilesSelect<false> | StaffProfilesSelect<true>;
     'job-openings': JobOpeningsSelect<false> | JobOpeningsSelect<true>;
     'gallery-photos': GalleryPhotosSelect<false> | GalleryPhotosSelect<true>;
+    parents: ParentsSelect<false> | ParentsSelect<true>;
+    'notification-log': NotificationLogSelect<false> | NotificationLogSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -125,13 +130,31 @@ export interface Config {
   widgets: {
     collections: CollectionsWidget;
   };
-  user: User;
+  user: User | Parent;
   jobs: {
     tasks: unknown;
     workflows: unknown;
   };
 }
 export interface UserAuthOperations {
+  forgotPassword: {
+    email: string;
+    password: string;
+  };
+  login: {
+    email: string;
+    password: string;
+  };
+  registerFirstUser: {
+    email: string;
+    password: string;
+  };
+  unlock: {
+    email: string;
+    password: string;
+  };
+}
+export interface ParentAuthOperations {
   forgotPassword: {
     email: string;
     password: string;
@@ -491,6 +514,58 @@ export interface GalleryPhoto {
   };
 }
 /**
+ * Parent portal accounts, created by the administration only. Deactivate the account when a family leaves the CPE.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "parents".
+ */
+export interface Parent {
+  id: number;
+  name: string;
+  language: 'fr' | 'en';
+  /**
+   * The parent only sees content for these groups in the portal.
+   */
+  groups: (number | Group)[];
+  active?: boolean | null;
+  demoSeed?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
+  sessions?:
+    | {
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
+      }[]
+    | null;
+  password?: string | null;
+  collection: 'parents';
+}
+/**
+ * History of emails sent to parents. Created automatically — read-only.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notification-log".
+ */
+export interface NotificationLog {
+  id: number;
+  title: string;
+  sourceType: 'activity' | 'announcement';
+  sourceId: number;
+  audience: string;
+  recipients: number;
+  sentBy: number | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -557,12 +632,25 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'gallery-photos';
         value: number | GalleryPhoto;
+      } | null)
+    | ({
+        relationTo: 'parents';
+        value: number | Parent;
+      } | null)
+    | ({
+        relationTo: 'notification-log';
+        value: number | NotificationLog;
       } | null);
   globalSlug?: string | null;
-  user: {
-    relationTo: 'users';
-    value: number | User;
-  };
+  user:
+    | {
+        relationTo: 'users';
+        value: number | User;
+      }
+    | {
+        relationTo: 'parents';
+        value: number | Parent;
+      };
   updatedAt: string;
   createdAt: string;
 }
@@ -572,10 +660,15 @@ export interface PayloadLockedDocument {
  */
 export interface PayloadPreference {
   id: number;
-  user: {
-    relationTo: 'users';
-    value: number | User;
-  };
+  user:
+    | {
+        relationTo: 'users';
+        value: number | User;
+      }
+    | {
+        relationTo: 'parents';
+        value: number | Parent;
+      };
   key?: string | null;
   value?:
     | {
@@ -854,6 +947,47 @@ export interface GalleryPhotosSelect<T extends boolean = true> {
               filename?: T;
             };
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "parents_select".
+ */
+export interface ParentsSelect<T extends boolean = true> {
+  name?: T;
+  language?: T;
+  groups?: T;
+  active?: T;
+  demoSeed?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  email?: T;
+  resetPasswordToken?: T;
+  resetPasswordExpiration?: T;
+  salt?: T;
+  hash?: T;
+  loginAttempts?: T;
+  lockUntil?: T;
+  sessions?:
+    | T
+    | {
+        id?: T;
+        createdAt?: T;
+        expiresAt?: T;
+      };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notification-log_select".
+ */
+export interface NotificationLogSelect<T extends boolean = true> {
+  title?: T;
+  sourceType?: T;
+  sourceId?: T;
+  audience?: T;
+  recipients?: T;
+  sentBy?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

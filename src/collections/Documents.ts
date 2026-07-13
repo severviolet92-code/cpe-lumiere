@@ -25,6 +25,8 @@ export const Documents: CollectionConfig = {
   },
   access: {
     read: ({ req }) => {
+      // Admin sees all; parents see all documents (portal + public) — intended;
+      // the anonymous public sees public-audience documents only.
       if (req.user) return true
       return { audience: { equals: 'public' } }
     },

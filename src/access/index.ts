@@ -9,32 +9,68 @@ import type { Access, FieldAccess, Where } from 'payload'
  * The public (unauthenticated) can only ever read published, public-audience content.
  */
 
-export const isAdminUser: Access = ({ req }) => Boolean(req.user)
+/** Staff/admin only — parents are authenticated but are NOT admin users. */
+export const isAdminUser: Access = ({ req }) => req.user?.collection === 'users'
 
 export const isDirectorOrDev: Access = ({ req }) =>
-  req.user?.role === 'director' || req.user?.role === 'developer'
+  req.user?.collection === 'users' &&
+  (req.user.role === 'director' || req.user.role === 'developer')
 
-export const isDeveloper: Access = ({ req }) => req.user?.role === 'developer'
+export const isDeveloper: Access = ({ req }) =>
+  req.user?.collection === 'users' && req.user.role === 'developer'
 
-/** Published content is public; drafts are visible to authenticated admin users only. */
+/** Published content is public; drafts are visible to admin users only (not parents). */
 export const publishedOnly: Access = ({ req }) => {
-  if (req.user) return true
+  if (req.user?.collection === 'users') return true
   return { _status: { equals: 'published' } }
 }
 
-/** Never readable by the public — admin users only (parent portal extends this in Phase 2). */
-export const adminOnly: Access = ({ req }) => Boolean(req.user)
+/** Never readable by the public or by parents — admin users only. */
+export const adminOnly: Access = ({ req }) => req.user?.collection === 'users'
 
-/** Public may read only when the document is explicitly public-audience AND published. */
+/**
+ * Audience-gated, versioned content (FAQ):
+ * admin sees everything incl. drafts; parents see all *published* entries
+ * (both audiences); the public sees only public-audience published entries.
+ */
 export const publicAudiencePublishedOnly: Access = ({ req }) => {
-  if (req.user) return true
+  if (req.user?.collection === 'users') return true
+  if (req.user?.collection === 'parents') {
+    const where: Where = { _status: { equals: 'published' } }
+    return where
+  }
   const where: Where = {
     and: [{ audience: { equals: 'public' } }, { _status: { equals: 'published' } }],
   }
   return where
 }
 
-export const developerFieldOnly: FieldAccess = ({ req }) => req.user?.role === 'developer'
+/** Extract group ids from an authenticated parent. */
+function parentGroupIds(req: { user?: unknown }): number[] {
+  const groups = (req.user as { groups?: (number | { id: number })[] })?.groups || []
+  return groups.map((g) => (typeof g === 'object' ? g.id : g))
+}
+
+/**
+ * Announcements: admin sees all; a parent sees published announcements that are
+ * CPE-wide or target one of their groups; never public.
+ */
+export const announcementsRead: Access = ({ req }) => {
+  if (req.user?.collection === 'users') return true
+  if (req.user?.collection === 'parents') {
+    const where: Where = {
+      and: [
+        { _status: { equals: 'published' } },
+        { or: [{ scope: { equals: 'cpe' } }, { groups: { in: parentGroupIds(req) } }] },
+      ],
+    }
+    return where
+  }
+  return false
+}
+
+export const developerFieldOnly: FieldAccess = ({ req }) =>
+  req.user?.collection === 'users' && req.user.role === 'developer'
 
 /**
  * Activities: admin sees all; a parent sees published activities of their own
@@ -44,10 +80,8 @@ export const developerFieldOnly: FieldAccess = ({ req }) => req.user?.role === '
 export const activitiesRead: Access = ({ req }) => {
   if (req.user?.collection === 'users') return true
   if (req.user?.collection === 'parents') {
-    const groups = (req.user as { groups?: (number | { id: number })[] }).groups || []
-    const groupIds = groups.map((g) => (typeof g === 'object' ? g.id : g))
     const where: Where = {
-      and: [{ groups: { in: groupIds } }, { _status: { equals: 'published' } }],
+      and: [{ groups: { in: parentGroupIds(req) } }, { _status: { equals: 'published' } }],
     }
     return where
   }

@@ -9,11 +9,15 @@ import 'dotenv/config'
 import { getPayload, type Payload } from 'payload'
 
 import config from '../payload.config'
+import { makeDemoPdf } from './demoPdf'
 import { renderIllustration } from './illustrations'
 import { rt } from './richText'
 
 const DEMO_DIRECTOR_EMAIL = 'direction@voielactee-demo.example'
 const DEMO_DIRECTOR_PASSWORD = 'Lumiere-Demo-2026!'
+const DEMO_PARENT_A_EMAIL = 'famille.tremblay@voielactee-demo.example' // groupe : Les Papillons
+const DEMO_PARENT_B_EMAIL = 'famille.nguyen@voielactee-demo.example' // groupes : Les Poussins + Les Explorateurs
+const DEMO_PARENT_PASSWORD = 'Parent-Demo-2026!'
 
 const day = (offset: number) => new Date(Date.now() + offset * 86400000).toISOString().slice(0, 10)
 
@@ -827,6 +831,65 @@ async function run() {
     })
   }
 
+  // ---- Demo parent accounts (fictional families) ----
+  const parentDefs = [
+    { email: DEMO_PARENT_A_EMAIL, name: 'Famille Tremblay (démo)', language: 'fr' as const, groups: [papillons] },
+    { email: DEMO_PARENT_B_EMAIL, name: 'Famille Nguyen (démo)', language: 'fr' as const, groups: [poussins, explorateurs] },
+  ]
+  for (const p of parentDefs) {
+    await payload.create({
+      collection: 'parents',
+      data: { ...p, password: DEMO_PARENT_PASSWORD, active: true, demoSeed: true },
+    })
+  }
+
+  // ---- Demo documents (tiny generated PDFs, clearly fictional) ----
+  const docDefs = [
+    { fr: 'Guide des parents (démo)', en: 'Parent guide (demo)', category: 'guides' as const, audience: 'public' as const },
+    { fr: 'Menu de la semaine (démo)', en: 'Weekly menu (demo)', category: 'menus' as const, audience: 'portal' as const },
+    { fr: 'Politique en cas de maladie (démo)', en: 'Illness policy (demo)', category: 'politiques' as const, audience: 'portal' as const },
+  ]
+  for (const d of docDefs) {
+    const pdf = makeDemoPdf(d.fr)
+    const doc = await payload.create({
+      collection: 'documents',
+      locale: 'fr',
+      data: { title: d.fr, category: d.category, audience: d.audience, demoSeed: true },
+      file: {
+        data: pdf,
+        mimetype: 'application/pdf',
+        name: `${d.category}-demo.pdf`,
+        size: pdf.length,
+      },
+    })
+    await payload.update({ collection: 'documents', id: doc.id, locale: 'en', data: { title: d.en } })
+  }
+
+  // ---- Group-scoped announcement (visible only to Papillons parents) ----
+  const annPapillons = await payload.create({
+    collection: 'announcements',
+    locale: 'fr',
+    data: {
+      title: 'Papillons : chapeau obligatoire cette semaine',
+      body: rt('Avec la vague de chaleur annoncée, merci de laisser un chapeau identifié au vestiaire de votre enfant toute la semaine.'),
+      scope: 'groups',
+      groups: [papillons],
+      pinned: false,
+      demoSeed: true,
+      _status: 'published',
+    },
+  })
+  await payload.update({
+    collection: 'announcements',
+    id: annPapillons.id,
+    locale: 'en',
+    data: {
+      title: 'Papillons: hat required this week',
+      body: rt('With the announced heat wave, please leave a labelled hat in your child’s cubby all week.'),
+      _status: 'published',
+    },
+  })
+
   // ---- Announcement ----
   const ann = await payload.create({
     collection: 'announcements',
@@ -856,6 +919,10 @@ async function run() {
   console.log('')
   console.log(`  Admin (demo director): ${DEMO_DIRECTOR_EMAIL}`)
   console.log(`  Password:              ${DEMO_DIRECTOR_PASSWORD}`)
+  console.log('')
+  console.log(`  Portal parent A (Papillons):            ${DEMO_PARENT_A_EMAIL}`)
+  console.log(`  Portal parent B (Poussins+Explorateurs): ${DEMO_PARENT_B_EMAIL}`)
+  console.log(`  Parent password:                        ${DEMO_PARENT_PASSWORD}`)
   console.log('')
   console.log('  Remove all demo content later with: npm run seed:clear')
   process.exit(0)

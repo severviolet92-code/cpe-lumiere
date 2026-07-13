@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
-import { adminOnly, isAdminUser } from '../access'
+import { announcementsRead, isAdminUser } from '../access'
+import { makeNotifyEndpoint } from '../endpoints/notify'
 import { demoSeedField } from '../fields/demoSeed'
 
 /**
@@ -23,14 +24,23 @@ export const Announcements: CollectionConfig = {
     },
   },
   access: {
-    read: adminOnly,
+    read: announcementsRead,
     create: isAdminUser,
     update: isAdminUser,
     delete: isAdminUser,
   },
   versions: { drafts: true },
   defaultSort: '-createdAt',
+  endpoints: [makeNotifyEndpoint('announcement')],
   fields: [
+    {
+      name: 'notifyAction',
+      type: 'ui',
+      admin: {
+        position: 'sidebar',
+        components: { Field: '/components/admin/NotifyButton#NotifyButton' },
+      },
+    },
     {
       name: 'title',
       type: 'text',

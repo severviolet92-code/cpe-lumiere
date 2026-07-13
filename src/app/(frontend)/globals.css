@@ -1010,6 +1010,62 @@ summary:focus-visible {
   justify-content: space-between;
 }
 
+/* ---------- Parent portal ---------- */
+
+.portal-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  border-bottom: 1px solid rgba(56, 41, 26, 0.12);
+  padding-bottom: 0.7rem;
+}
+
+.portal-nav a {
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+
+.portal-nav a:hover {
+  background: var(--honey-whisper);
+  color: var(--ink);
+}
+
+.portal-nav a[aria-current='page'] {
+  background: var(--honey);
+  color: var(--ink);
+}
+
+.announcement-item {
+  background: #fffdf8;
+  border: 1px solid rgba(56, 41, 26, 0.08);
+  border-radius: var(--radius);
+  padding: 1.4rem 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.announcement-item__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.pinned-badge {
+  background: var(--terracotta-whisper);
+  color: var(--terracotta-deep);
+  border-radius: var(--radius-pill);
+  padding: 0.2rem 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 /* ---------- Utilities ---------- */
 
 .skip-link {
