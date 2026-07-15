@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="fr-CA">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact — CPE Lumière</title>
+  <meta name="description" content="Coordonnées, heures d'ouverture et formulaire pour joindre le CPE Lumière.">
+  <link rel="icon" type="image/svg+xml" href="assets/img/logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#contenu">Aller au contenu principal</a>
+
+  <header class="entete">
+    <div class="conteneur entete__barre">
+      <a class="marque" href="index.html">
+        <img class="marque__logo" src="assets/img/logo.svg" alt="">
+        <span>CPE Lumière<small>Centre de la petite enfance</small></span>
+      </a>
+      <button class="nav__bascule" aria-expanded="false" aria-controls="navigation-principale">
+        Menu ☰
+      </button>
+      <nav class="nav" id="navigation-principale" aria-label="Navigation principale">
+        <a href="index.html">Accueil</a>
+        <a href="programme.html">Programme éducatif</a>
+        <a href="inscription.html">Inscription</a>
+        <a href="equipe.html">Notre équipe</a>
+        <a href="contact.html" aria-current="page">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="contenu">
+    <section class="page-entete">
+      <div class="conteneur">
+        <span class="surtitre" style="color:#d55a17;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;font-size:0.85rem;">Contact</span>
+        <h1>Nous joindre</h1>
+        <p>
+          Une question sur l'inscription, une visite à planifier ou simplement envie
+          d'en savoir plus? Écrivez-nous ou appelez-nous : ça nous fera plaisir.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="conteneur deux-colonnes">
+        <div class="apparait">
+          <div class="section__entete">
+            <span class="surtitre">Coordonnées</span>
+            <h2>CPE Lumière</h2>
+          </div>
+          <div class="grille-cartes" style="grid-template-columns: 1fr;">
+            <article class="carte">
+              <h3>📍 Adresse</h3>
+              <p>
+                123, rue des Enfants<br>
+                Ville (Québec)  A1B 2C3
+              </p>
+              <p style="margin-bottom:0;"><em>Coordonnées fictives — à remplacer par les vôtres.</em></p>
+            </article>
+            <article class="carte">
+              <h3>📞 Téléphone et courriel</h3>
+              <p>
+                Téléphone : 555 555-0123<br>
+                Courriel : <a href="mailto:info@cpelumiere.example">info@cpelumiere.example</a>
+              </p>
+            </article>
+            <article class="carte">
+              <h3>🕖 Heures d'ouverture</h3>
+              <p style="margin-bottom:0;">
+                Lundi au vendredi, de 7 h à 18 h.<br>
+                Fermé les jours fériés et durant la période des Fêtes.
+              </p>
+            </article>
+          </div>
+        </div>
+        <div class="apparait">
+          <div class="section__entete">
+            <span class="surtitre">Écrivez-nous</span>
+            <h2>Formulaire de contact</h2>
+          </div>
+          <form class="formulaire" id="formulaire-contact" novalidate>
+            <div>
+              <label for="champ-nom">Votre nom</label>
+              <input type="text" id="champ-nom" name="nom" autocomplete="name" required>
+            </div>
+            <div>
+              <label for="champ-courriel">Votre courriel</label>
+              <input type="email" id="champ-courriel" name="courriel" autocomplete="email" required>
+            </div>
+            <div>
+              <label for="champ-sujet">Sujet</label>
+              <select id="champ-sujet" name="sujet">
+                <option value="inscription">Inscription et liste d'attente</option>
+                <option value="visite">Planifier une visite</option>
+                <option value="emploi">Travailler au CPE</option>
+                <option value="autre">Autre question</option>
+              </select>
+            </div>
+            <div>
+              <label for="champ-message">Votre message</label>
+              <textarea id="champ-message" name="message" rows="5" required></textarea>
+            </div>
+            <button type="submit" class="bouton bouton--primaire">Envoyer le message</button>
+            <p style="margin:0;font-size:0.9rem;color:var(--encre-douce);">
+              Formulaire de démonstration : aucun message n'est réellement envoyé.
+              Branchez-le à votre service d'envoi (Formspree, Netlify Forms, etc.).
+            </p>
+          </form>
+          <div class="message-confirmation" id="confirmation-contact" tabindex="-1" hidden>
+            ✅ Merci! Votre message a bien été reçu (démonstration). Nous vous
+            répondrons dans les meilleurs délais.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--blanche">
+      <div class="conteneur">
+        <div class="section__entete apparait">
+          <span class="surtitre">Nous trouver</span>
+          <h2>Au cœur du quartier</h2>
+          <p>
+            Le CPE est facilement accessible à pied, à vélo et en transport en commun.
+            Un débarcadère est disponible devant l'entrée principale pour les arrivées
+            et les départs.
+          </p>
+        </div>
+        <div class="encadre apparait" style="text-align:center;">
+          <p style="margin:0;">
+            🗺️ Emplacement de la carte interactive — intégrez ici votre carte
+            (Google Maps, OpenStreetMap) une fois l'adresse réelle confirmée.
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="pied">
+    <div class="conteneur">
+      <div class="pied__grille">
+        <div>
+          <h3>CPE Lumière</h3>
+          <p>
+            Un centre de la petite enfance chaleureux et lumineux pour les enfants de
+            0 à 5 ans.
+          </p>
+        </div>
+        <div>
+          <h3>Navigation</h3>
+          <ul>
+            <li><a href="index.html">Accueil</a></li>
+            <li><a href="programme.html">Programme éducatif</a></li>
+            <li><a href="inscription.html">Inscription</a></li>
+            <li><a href="equipe.html">Notre équipe</a></li>
+            <li><a href="contact.html">Contact</a></li>
+          </ul>
+        </div>
+        <div>
+          <h3>Nous joindre</h3>
+          <ul>
+            <li>123, rue des Enfants<br>Ville (Québec)  A1B 2C3</li>
+            <li>Téléphone : 555 555-0123</li>
+            <li><a href="mailto:info@cpelumiere.example">info@cpelumiere.example</a></li>
+          </ul>
+        </div>
+        <div>
+          <h3>Heures d'ouverture</h3>
+          <ul>
+            <li>Lundi au vendredi</li>
+            <li>7 h à 18 h</li>
+          </ul>
+        </div>
+      </div>
+      <div class="pied__mentions">
+        <span>© <span id="annee-courante">2026</span> CPE Lumière. Tous droits réservés.</span>
+        <span>Site de démonstration — coordonnées fictives à remplacer.</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="assets/js/main.js"></script>
+</body>
+</html>
