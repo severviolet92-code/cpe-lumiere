@@ -83,6 +83,7 @@ export interface Config {
     'notification-log': NotificationLog;
     'kb-categories': KbCategory;
     'kb-articles': KbArticle;
+    'email-campaigns': EmailCampaign;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -105,6 +106,7 @@ export interface Config {
     'notification-log': NotificationLogSelect<false> | NotificationLogSelect<true>;
     'kb-categories': KbCategoriesSelect<false> | KbCategoriesSelect<true>;
     'kb-articles': KbArticlesSelect<false> | KbArticlesSelect<true>;
+    'email-campaigns': EmailCampaignsSelect<false> | EmailCampaignsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -586,11 +588,14 @@ export interface Parent {
 export interface NotificationLog {
   id: number;
   title: string;
-  sourceType: 'activity' | 'announcement';
+  sourceType: 'activity' | 'announcement' | 'campaign';
   sourceId: number;
   audience: string;
   recipients: number;
-  sentBy: number | User;
+  delivered?: number | null;
+  failed?: number | null;
+  sentBy?: (number | null) | User;
+  trigger?: ('manual' | 'schedule') | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -658,6 +663,60 @@ export interface KbArticle {
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
+}
+/**
+ * Emails to parents: draft → preview → send (immediate or scheduled). Every send is recorded in the notification log.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "email-campaigns".
+ */
+export interface EmailCampaign {
+  id: number;
+  /**
+   * Visible to the team only (e.g. “Back-to-school reminder 2026”).
+   */
+  title: string;
+  subject: string;
+  /**
+   * The message is wrapped in the CPE-branded template — use the preview.
+   */
+  body: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  audience: 'all' | 'groups';
+  groups?: (number | Group)[] | null;
+  /**
+   * Filled automatically when the campaign is created from an announcement.
+   */
+  relatedAnnouncement?: (number | null) | Announcement;
+  /**
+   * Leave empty for manual send. Scheduled sends go out on the scheduler’s next pass.
+   */
+  scheduledAt?: string | null;
+  status: 'draft' | 'scheduled' | 'sending' | 'sent' | 'failed';
+  sentAt?: string | null;
+  recipientsCount?: number | null;
+  deliveredCount?: number | null;
+  failedCount?: number | null;
+  /**
+   * Failed addresses, if any.
+   */
+  deliveryNote?: string | null;
+  demoSeed?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -742,6 +801,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'kb-articles';
         value: number | KbArticle;
+      } | null)
+    | ({
+        relationTo: 'email-campaigns';
+        value: number | EmailCampaign;
       } | null);
   globalSlug?: string | null;
   user:
@@ -1094,7 +1157,10 @@ export interface NotificationLogSelect<T extends boolean = true> {
   sourceId?: T;
   audience?: T;
   recipients?: T;
+  delivered?: T;
+  failed?: T;
   sentBy?: T;
+  trigger?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1130,6 +1196,28 @@ export interface KbArticlesSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "email-campaigns_select".
+ */
+export interface EmailCampaignsSelect<T extends boolean = true> {
+  title?: T;
+  subject?: T;
+  body?: T;
+  audience?: T;
+  groups?: T;
+  relatedAnnouncement?: T;
+  scheduledAt?: T;
+  status?: T;
+  sentAt?: T;
+  recipientsCount?: T;
+  deliveredCount?: T;
+  failedCount?: T;
+  deliveryNote?: T;
+  demoSeed?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

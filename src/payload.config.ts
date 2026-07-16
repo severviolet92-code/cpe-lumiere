@@ -22,6 +22,7 @@ import { Parents } from './collections/Parents'
 import { NotificationLog } from './collections/NotificationLog'
 import { KBCategories } from './collections/KBCategories'
 import { KBArticles } from './collections/KBArticles'
+import { EmailCampaigns } from './collections/EmailCampaigns'
 import { globals } from './globals'
 
 const filename = fileURLToPath(import.meta.url)
@@ -59,6 +60,7 @@ export default buildConfig({
     NotificationLog,
     KBCategories,
     KBArticles,
+    EmailCampaigns,
   ],
   globals,
   editor: lexicalEditor(),

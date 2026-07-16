@@ -36,18 +36,31 @@ export const NotificationLog: CollectionConfig = {
       options: [
         { label: { fr: 'Activité', en: 'Activity' }, value: 'activity' },
         { label: { fr: 'Annonce', en: 'Announcement' }, value: 'announcement' },
+        { label: { fr: 'Campagne courriel', en: 'Email campaign' }, value: 'campaign' },
       ],
       label: { fr: 'Type de contenu', en: 'Content type' },
     },
     { name: 'sourceId', type: 'number', required: true, admin: { hidden: true } },
     { name: 'audience', type: 'text', required: true, label: { fr: 'Destinataires (groupes)', en: 'Audience (groups)' } },
     { name: 'recipients', type: 'number', required: true, label: { fr: 'Nombre de parents', en: 'Parent count' } },
+    { name: 'delivered', type: 'number', label: { fr: 'Livrés', en: 'Delivered' } },
+    { name: 'failed', type: 'number', label: { fr: 'Échecs', en: 'Failed' } },
     {
+      // Optional: scheduled campaign sends have no acting admin user.
       name: 'sentBy',
       type: 'relationship',
       relationTo: 'users',
-      required: true,
       label: { fr: 'Envoyée par', en: 'Sent by' },
+    },
+    {
+      name: 'trigger',
+      type: 'select',
+      defaultValue: 'manual',
+      options: [
+        { label: { fr: 'Envoi manuel', en: 'Manual send' }, value: 'manual' },
+        { label: { fr: 'Envoi planifié', en: 'Scheduled send' }, value: 'schedule' },
+      ],
+      label: { fr: 'Déclencheur', en: 'Trigger' },
     },
   ],
   timestamps: true,

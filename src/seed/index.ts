@@ -1309,6 +1309,64 @@ async function run() {
     })
   }
 
+  // ---- Email campaigns (draft + scheduled examples; nothing is sent by the seed) ----
+  const campaignDraft = await payload.create({
+    collection: 'email-campaigns',
+    locale: 'fr',
+    data: {
+      title: 'Bienvenue de la nouvelle éducatrice (démo)',
+      subject: 'Une nouvelle éducatrice se joint aux Lapinots',
+      body: rt(
+        'Bonjour,',
+        'Nous sommes heureux d’accueillir Camille (personnage fictif de démonstration) dans l’équipe des Lapinots. Elle animera notamment l’heure du conte du vendredi.',
+        'Tous les détails se trouvent dans le portail parents.',
+      ),
+      audience: 'all',
+      demoSeed: true,
+    },
+  })
+  await payload.update({
+    collection: 'email-campaigns',
+    id: campaignDraft.id,
+    locale: 'en',
+    data: {
+      subject: 'A new educator joins the Lapinots',
+      body: rt(
+        'Hello,',
+        'We are delighted to welcome Camille (a fictional demonstration character) to the Lapinots team. Among other things, she will lead Friday story time.',
+        'All the details are in the parent portal.',
+      ),
+    },
+  })
+
+  const campaignScheduled = await payload.create({
+    collection: 'email-campaigns',
+    locale: 'fr',
+    data: {
+      title: 'Rappel pique-nique (démo, planifiée)',
+      subject: 'Rappel : pique-nique des familles ce samedi',
+      body: rt(
+        'Bonjour,',
+        'Petit rappel : le grand pique-nique des familles a lieu ce samedi au parc. Apportez votre couverture — le CPE fournit collations et jeux !',
+      ),
+      audience: 'all',
+      scheduledAt: new Date(Date.now() + 2 * 86400000).toISOString(),
+      demoSeed: true,
+    },
+  })
+  await payload.update({
+    collection: 'email-campaigns',
+    id: campaignScheduled.id,
+    locale: 'en',
+    data: {
+      subject: 'Reminder: family picnic this Saturday',
+      body: rt(
+        'Hello,',
+        'A quick reminder: the big family picnic takes place this Saturday at the park. Bring your blanket — the CPE provides snacks and games!',
+      ),
+    },
+  })
+
   console.log('')
   console.log('✔ Demo seed complete — « CPE La Voie lactée » (all content fictional, flagged demoSeed).')
   console.log('')
