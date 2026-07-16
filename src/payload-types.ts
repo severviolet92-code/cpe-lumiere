@@ -81,6 +81,8 @@ export interface Config {
     'gallery-photos': GalleryPhoto;
     parents: Parent;
     'notification-log': NotificationLog;
+    'kb-categories': KbCategory;
+    'kb-articles': KbArticle;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -101,6 +103,8 @@ export interface Config {
     'gallery-photos': GalleryPhotosSelect<false> | GalleryPhotosSelect<true>;
     parents: ParentsSelect<false> | ParentsSelect<true>;
     'notification-log': NotificationLogSelect<false> | NotificationLogSelect<true>;
+    'kb-categories': KbCategoriesSelect<false> | KbCategoriesSelect<true>;
+    'kb-articles': KbArticlesSelect<false> | KbArticlesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -566,6 +570,71 @@ export interface NotificationLog {
   createdAt: string;
 }
 /**
+ * Help centre article categories (e.g. Registration, Fees, Meals). Order controls display in the portal.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "kb-categories".
+ */
+export interface KbCategory {
+  id: number;
+  name: string;
+  /**
+   * A single emoji, e.g. 🍎
+   */
+  icon?: string | null;
+  order?: number | null;
+  demoSeed?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Official answers served by the parent portal assistant. Save as draft to preview, publish to make visible. Keywords improve search.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "kb-articles".
+ */
+export interface KbArticle {
+  id: number;
+  question: string;
+  /**
+   * Rich text: bold, lists and links are preserved in the assistant.
+   */
+  answer: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  image?: (number | null) | Media;
+  category: number | KbCategory;
+  /**
+   * Synonyms and variants parents might type (e.g. “fee”, “price”, “payment”).
+   */
+  keywords?:
+    | {
+        term: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Uncheck to temporarily hide the article without deleting it.
+   */
+  enabled?: boolean | null;
+  demoSeed?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -640,6 +709,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'notification-log';
         value: number | NotificationLog;
+      } | null)
+    | ({
+        relationTo: 'kb-categories';
+        value: number | KbCategory;
+      } | null)
+    | ({
+        relationTo: 'kb-articles';
+        value: number | KbArticle;
       } | null);
   globalSlug?: string | null;
   user:
@@ -988,6 +1065,39 @@ export interface NotificationLogSelect<T extends boolean = true> {
   sentBy?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "kb-categories_select".
+ */
+export interface KbCategoriesSelect<T extends boolean = true> {
+  name?: T;
+  icon?: T;
+  order?: T;
+  demoSeed?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "kb-articles_select".
+ */
+export interface KbArticlesSelect<T extends boolean = true> {
+  question?: T;
+  answer?: T;
+  image?: T;
+  category?: T;
+  keywords?:
+    | T
+    | {
+        term?: T;
+        id?: T;
+      };
+  enabled?: T;
+  demoSeed?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

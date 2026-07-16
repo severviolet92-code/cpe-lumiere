@@ -11,6 +11,8 @@ import { getPayload } from 'payload'
 import config from '../payload.config'
 
 const COLLECTIONS = [
+  'kb-articles',
+  'kb-categories',
   'parents',
   'gallery-photos',
   'activities',

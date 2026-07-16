@@ -138,6 +138,24 @@ export const ui = {
       signOut: 'Se déconnecter',
       pinnedBadge: 'Épinglée',
       privateNote: 'Espace privé réservé aux familles du CPE.',
+      assistant: {
+        title: 'Centre d’aide',
+        lede: 'Posez votre question — l’assistant répond à partir des informations officielles du CPE.',
+        greeting:
+          'Bonjour ! Posez-moi une question sur la vie au CPE : frais, repas, horaires, politiques…',
+        placeholder: 'Écrivez votre question…',
+        send: 'Envoyer',
+        searching: 'Recherche…',
+        resultsIntro: 'Voici ce que j’ai trouvé :',
+        fallback:
+          'Je n’ai pas trouvé de réponse à cette question. Reformulez-la autrement, ou écrivez directement au CPE — l’équipe vous répondra rapidement.',
+        contactCta: 'Écrire au CPE',
+        suggestionsLabel: 'Questions populaires',
+        browseTitle: 'Parcourir le centre d’aide',
+        browseEmpty: 'Le centre d’aide sera rempli sous peu.',
+        error: 'Une erreur est survenue. Réessayez dans un instant.',
+        inputLabel: 'Votre question',
+      },
     },
     footer: {
       quickLinks: 'Liens rapides',
@@ -281,6 +299,24 @@ export const ui = {
       signOut: 'Sign out',
       pinnedBadge: 'Pinned',
       privateNote: 'Private space reserved for the CPE’s families.',
+      assistant: {
+        title: 'Help centre',
+        lede: 'Ask your question — the assistant answers from the CPE’s official information.',
+        greeting:
+          'Hello! Ask me anything about life at the CPE: fees, meals, schedules, policies…',
+        placeholder: 'Type your question…',
+        send: 'Send',
+        searching: 'Searching…',
+        resultsIntro: 'Here is what I found:',
+        fallback:
+          'I couldn’t find an answer to that question. Try rephrasing it, or write to the CPE directly — the team replies quickly.',
+        contactCta: 'Write to the CPE',
+        suggestionsLabel: 'Popular questions',
+        browseTitle: 'Browse the help centre',
+        browseEmpty: 'The help centre will be filled shortly.',
+        error: 'Something went wrong. Please try again in a moment.',
+        inputLabel: 'Your question',
+      },
     },
     footer: {
       quickLinks: 'Quick links',

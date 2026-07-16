@@ -73,6 +73,24 @@ export const developerFieldOnly: FieldAccess = ({ req }) =>
   req.user?.collection === 'users' && req.user.role === 'developer'
 
 /**
+ * Knowledge base articles: admin sees everything; parents see published AND
+ * enabled articles only; never public (the public FAQ page has its own content).
+ */
+export const kbArticlesRead: Access = ({ req }) => {
+  if (req.user?.collection === 'users') return true
+  if (req.user?.collection === 'parents') {
+    const where: Where = {
+      and: [{ _status: { equals: 'published' } }, { enabled: { equals: true } }],
+    }
+    return where
+  }
+  return false
+}
+
+/** Knowledge base categories: any authenticated account (admin or parent). */
+export const kbCategoriesRead: Access = ({ req }) => Boolean(req.user)
+
+/**
  * Activities: admin sees all; a parent sees published activities of their own
  * group(s) only; the public sees only activities the director explicitly marked
  * `visibility: public` (and published). Private by default.
