@@ -329,6 +329,11 @@ export interface Activity {
 export interface Announcement {
   id: number;
   title: string;
+  kind: 'news' | 'event' | 'reminder' | 'holiday';
+  /**
+   * Upcoming events are highlighted in the portal.
+   */
+  eventDate?: string | null;
   body: {
     root: {
       type: string;
@@ -344,14 +349,58 @@ export interface Announcement {
     };
     [k: string]: unknown;
   };
+  image?: (number | null) | Media;
+  /**
+   * Paste the video link (preferably unlisted). It is embedded in the portal.
+   */
+  videoUrl?: string | null;
+  /**
+   * Upload the PDF to Documents first, then attach it here.
+   */
+  attachments?: (number | Document)[] | null;
   scope: 'cpe' | 'groups';
   groups?: (number | Group)[] | null;
   pinned?: boolean | null;
+  /**
+   * Publish as usual: the announcement stays hidden from parents until this moment.
+   */
+  publishAt?: string | null;
+  /**
+   * Leaves the main feed but remains available in the portal archives.
+   */
+  archived?: boolean | null;
+  /**
+   * After this date the announcement is automatically filed under archives.
+   */
   expiresAt?: string | null;
   demoSeed?: boolean | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
+}
+/**
+ * Downloadable documents: menus, policies, guides. No document may contain personal information.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "documents".
+ */
+export interface Document {
+  id: number;
+  title: string;
+  category: 'menus' | 'politiques' | 'guides' | 'general';
+  audience: 'public' | 'portal';
+  demoSeed?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
 }
 /**
  * CPE closure days (holidays, pedagogical days).
@@ -399,30 +448,6 @@ export interface FaqEntry {
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
-}
-/**
- * Downloadable documents: menus, policies, guides. No document may contain personal information.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "documents".
- */
-export interface Document {
-  id: number;
-  title: string;
-  category: 'menus' | 'politiques' | 'guides' | 'general';
-  audience: 'public' | 'portal';
-  demoSeed?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
 }
 /**
  * Public team presentation. The person’s written consent is required before publishing.
@@ -891,10 +916,17 @@ export interface ActivitiesSelect<T extends boolean = true> {
  */
 export interface AnnouncementsSelect<T extends boolean = true> {
   title?: T;
+  kind?: T;
+  eventDate?: T;
   body?: T;
+  image?: T;
+  videoUrl?: T;
+  attachments?: T;
   scope?: T;
   groups?: T;
   pinned?: T;
+  publishAt?: T;
+  archived?: T;
   expiresAt?: T;
   demoSeed?: T;
   updatedAt?: T;

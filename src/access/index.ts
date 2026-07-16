@@ -53,7 +53,9 @@ function parentGroupIds(req: { user?: unknown }): number[] {
 
 /**
  * Announcements: admin sees all; a parent sees published announcements that are
- * CPE-wide or target one of their groups; never public.
+ * CPE-wide or target one of their groups, and whose scheduled publication time
+ * (if any) has passed; never public. The schedule gate lives here so a future
+ * `publishAt` can never leak through any API, not just the portal pages.
  */
 export const announcementsRead: Access = ({ req }) => {
   if (req.user?.collection === 'users') return true
@@ -62,6 +64,12 @@ export const announcementsRead: Access = ({ req }) => {
       and: [
         { _status: { equals: 'published' } },
         { or: [{ scope: { equals: 'cpe' } }, { groups: { in: parentGroupIds(req) } }] },
+        {
+          or: [
+            { publishAt: { exists: false } },
+            { publishAt: { less_than_equal: new Date().toISOString() } },
+          ],
+        },
       ],
     }
     return where

@@ -3,10 +3,10 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 import { ActivityCard } from '../../../../components/ActivityCard'
+import { AnnouncementCard } from '../../../../components/portal/AnnouncementCard'
 import { PortalLogin } from '../../../../components/portal/PortalLogin'
 import { PortalShell } from '../../../../components/portal/PortalShell'
 import { Reveal } from '../../../../components/Reveal'
-import { RichTextBlock } from '../../../../components/RichTextBlock'
 import { isLocale, localizedPath, type Locale } from '../../../../i18n/config'
 import { t } from '../../../../i18n/ui'
 import { formatDateRange } from '../../../../lib/format'
@@ -68,6 +68,12 @@ export default async function PortalPage({ params }: { params: Promise<{ locale:
     }),
     payload.find({
       collection: 'announcements',
+      where: {
+        and: [
+          { archived: { not_equals: true } },
+          { or: [{ expiresAt: { exists: false } }, { expiresAt: { greater_than_equal: today } }] },
+        ],
+      },
       sort: '-createdAt',
       limit: 5,
       locale,
@@ -120,13 +126,7 @@ export default async function PortalPage({ params }: { params: Promise<{ locale:
               <p style={{ color: 'var(--ink-soft)' }}>{dict.portal.noAnnouncements}</p>
             ) : (
               sortedAnnouncements.slice(0, 3).map((a) => (
-                <article className="announcement-item" key={a.id}>
-                  <div className="announcement-item__meta">
-                    {a.pinned && <span className="pinned-badge">{dict.portal.pinnedBadge}</span>}
-                    <h3 style={{ margin: 0, fontSize: '1.1rem' }}>{a.title}</h3>
-                  </div>
-                  <RichTextBlock data={a.body} />
-                </article>
+                <AnnouncementCard key={a.id} announcement={a} locale={locale} compact />
               ))
             )}
           </div>

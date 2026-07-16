@@ -1125,6 +1125,7 @@ async function run() {
     { fr: 'Menu de la semaine (démo)', en: 'Weekly menu (demo)', category: 'menus' as const, audience: 'portal' as const },
     { fr: 'Politique en cas de maladie (démo)', en: 'Illness policy (demo)', category: 'politiques' as const, audience: 'portal' as const },
   ]
+  const documentIds: number[] = []
   for (const d of docDefs) {
     const pdf = makeDemoPdf(d.fr)
     const doc = await payload.create({
@@ -1139,56 +1140,174 @@ async function run() {
       },
     })
     await payload.update({ collection: 'documents', id: doc.id, locale: 'en', data: { title: d.en } })
+    documentIds.push(doc.id as number)
+  }
+  const [, menuDocId, policyDocId] = documentIds
+
+  // ---- Announcements & news centre (every kind represented) ----
+  console.log('Seeding news centre…')
+  type AnnouncementSeed = {
+    fr: { title: string; body: ReturnType<typeof rt> }
+    en: { title: string; body: ReturnType<typeof rt> }
+    kind: 'news' | 'event' | 'reminder' | 'holiday'
+    scope: 'cpe' | 'groups'
+    groups?: number[]
+    pinned?: boolean
+    archived?: boolean
+    eventDate?: string
+    publishAt?: string
+    expiresAt?: string
+    image?: number
+    attachments?: number[]
   }
 
-  // ---- Group-scoped announcement (visible only to Papillons parents) ----
-  const annPapillons = await payload.create({
-    collection: 'announcements',
-    locale: 'fr',
-    data: {
-      title: 'Papillons : chapeau obligatoire cette semaine',
-      body: rt('Avec la vague de chaleur annoncée, merci de laisser un chapeau identifié au vestiaire de votre enfant toute la semaine.'),
-      scope: 'groups',
-      groups: [papillons],
-      pinned: false,
-      demoSeed: true,
-      _status: 'published',
-    },
-  })
-  await payload.update({
-    collection: 'announcements',
-    id: annPapillons.id,
-    locale: 'en',
-    data: {
-      title: 'Papillons: hat required this week',
-      body: rt('With the announced heat wave, please leave a labelled hat in your child’s cubby all week.'),
-      _status: 'published',
-    },
-  })
-
-  // ---- Announcement ----
-  const ann = await payload.create({
-    collection: 'announcements',
-    locale: 'fr',
-    data: {
-      title: 'Rappel : photos de groupe la semaine prochaine',
-      body: rt('La photographe sera au CPE mardi prochain en avant-midi. Le formulaire de consentement doit être signé au préalable.'),
+  const announcementDefs: AnnouncementSeed[] = [
+    {
+      kind: 'reminder',
       scope: 'cpe',
       pinned: true,
-      demoSeed: true,
-      _status: 'published',
+      fr: {
+        title: 'Rappel : photos de groupe la semaine prochaine',
+        body: rt('La photographe sera au CPE mardi prochain en avant-midi. Le formulaire de consentement doit être signé au préalable.'),
+      },
+      en: {
+        title: 'Reminder: group photos next week',
+        body: rt('The photographer will be at the CPE next Tuesday morning. The consent form must be signed beforehand.'),
+      },
     },
-  })
-  await payload.update({
-    collection: 'announcements',
-    id: ann.id,
-    locale: 'en',
-    data: {
-      title: 'Reminder: group photos next week',
-      body: rt('The photographer will be at the CPE next Tuesday morning. The consent form must be signed beforehand.'),
-      _status: 'published',
+    {
+      kind: 'reminder',
+      scope: 'groups',
+      groups: [papillons],
+      fr: {
+        title: 'Papillons : chapeau obligatoire cette semaine',
+        body: rt('Avec la vague de chaleur annoncée, merci de laisser un chapeau identifié au vestiaire de votre enfant toute la semaine.'),
+      },
+      en: {
+        title: 'Papillons: hat required this week',
+        body: rt('With the announced heat wave, please leave a labelled hat in your child’s cubby all week.'),
+      },
     },
-  })
+    {
+      kind: 'news',
+      scope: 'cpe',
+      image: img.histoires,
+      fr: {
+        title: 'Bienvenue à Camille, nouvelle éducatrice (démo)',
+        body: rt(
+          'Nous accueillons Camille (personnage fictif de démonstration) dans l’équipe des Lapinots. Passionnée de littérature jeunesse, elle animera aussi l’heure du conte du vendredi.',
+        ),
+      },
+      en: {
+        title: 'Welcome Camille, our new educator (demo)',
+        body: rt(
+          'We welcome Camille (a fictional demonstration character) to the Lapinots team. Passionate about children’s literature, she will also lead Friday story time.',
+        ),
+      },
+    },
+    {
+      kind: 'event',
+      scope: 'cpe',
+      eventDate: day(12),
+      image: img.pique_nique,
+      fr: {
+        title: 'Pique-nique des familles au parc',
+        body: rt(
+          'Toutes les familles sont invitées à notre grand pique-nique annuel. Apportez votre couverture — le CPE fournit les collations et les jeux !',
+        ),
+      },
+      en: {
+        title: 'Family picnic at the park',
+        body: rt(
+          'All families are invited to our big annual picnic. Bring your blanket — the CPE provides snacks and games!',
+        ),
+      },
+    },
+    {
+      kind: 'news',
+      scope: 'cpe',
+      attachments: [menuDocId],
+      fr: {
+        title: 'Nouveau menu de saison',
+        body: rt('Le menu des quatre prochaines semaines est en ligne. Vous le trouverez aussi dans la section Documents.'),
+      },
+      en: {
+        title: 'New seasonal menu',
+        body: rt('The menu for the next four weeks is online. You will also find it in the Documents section.'),
+      },
+    },
+    {
+      kind: 'holiday',
+      scope: 'cpe',
+      expiresAt: day(35),
+      fr: {
+        title: 'Fermeture : journée pédagogique',
+        body: rt('Le CPE sera fermé pour la journée pédagogique. Consultez le calendrier des fermetures pour l’année complète.'),
+      },
+      en: {
+        title: 'Closure: pedagogical day',
+        body: rt('The CPE will be closed for the pedagogical day. See the closure calendar for the full year.'),
+      },
+    },
+    {
+      // Scheduled in the future: parents must NOT see this one yet.
+      kind: 'news',
+      scope: 'cpe',
+      publishAt: new Date(Date.now() + 7 * 86400000).toISOString(),
+      fr: {
+        title: 'Inscriptions à la sortie d’hiver (à venir)',
+        body: rt('Les détails de la sortie d’hiver seront annoncés ici la semaine prochaine.'),
+      },
+      en: {
+        title: 'Winter outing registration (coming up)',
+        body: rt('Details of the winter outing will be announced here next week.'),
+      },
+    },
+    {
+      // Archived: browsable in the portal archive section.
+      kind: 'news',
+      scope: 'cpe',
+      archived: true,
+      attachments: [policyDocId],
+      fr: {
+        title: 'Retour sur la rentrée',
+        body: rt('Merci à toutes les familles pour une rentrée tout en douceur. La politique en cas de maladie mise à jour reste jointe pour référence.'),
+      },
+      en: {
+        title: 'Looking back on the start of the year',
+        body: rt('Thank you to every family for such a smooth start. The updated illness policy remains attached for reference.'),
+      },
+    },
+  ]
+
+  for (const a of announcementDefs) {
+    const doc = await payload.create({
+      collection: 'announcements',
+      locale: 'fr',
+      data: {
+        title: a.fr.title,
+        body: a.fr.body,
+        kind: a.kind,
+        scope: a.scope,
+        groups: a.groups,
+        pinned: a.pinned ?? false,
+        archived: a.archived ?? false,
+        eventDate: a.eventDate,
+        publishAt: a.publishAt,
+        expiresAt: a.expiresAt,
+        image: a.image,
+        attachments: a.attachments,
+        demoSeed: true,
+        _status: 'published',
+      },
+    })
+    await payload.update({
+      collection: 'announcements',
+      id: doc.id,
+      locale: 'en',
+      data: { title: a.en.title, body: a.en.body, _status: 'published' },
+    })
+  }
 
   console.log('')
   console.log('✔ Demo seed complete — « CPE La Voie lactée » (all content fictional, flagged demoSeed).')
