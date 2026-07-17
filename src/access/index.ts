@@ -53,7 +53,9 @@ function parentGroupIds(req: { user?: unknown }): number[] {
 
 /**
  * Announcements: admin sees all; a parent sees published announcements that are
- * CPE-wide or target one of their groups; never public.
+ * CPE-wide or target one of their groups, and whose scheduled publication time
+ * (if any) has passed; never public. The schedule gate lives here so a future
+ * `publishAt` can never leak through any API, not just the portal pages.
  */
 export const announcementsRead: Access = ({ req }) => {
   if (req.user?.collection === 'users') return true
@@ -62,6 +64,12 @@ export const announcementsRead: Access = ({ req }) => {
       and: [
         { _status: { equals: 'published' } },
         { or: [{ scope: { equals: 'cpe' } }, { groups: { in: parentGroupIds(req) } }] },
+        {
+          or: [
+            { publishAt: { exists: false } },
+            { publishAt: { less_than_equal: new Date().toISOString() } },
+          ],
+        },
       ],
     }
     return where
@@ -71,6 +79,34 @@ export const announcementsRead: Access = ({ req }) => {
 
 export const developerFieldOnly: FieldAccess = ({ req }) =>
   req.user?.collection === 'users' && req.user.role === 'developer'
+
+/**
+ * Knowledge base articles, feeding the parent assistant (portal) and the
+ * public help centre (/faq): admin sees everything; a signed-in parent sees
+ * every published + enabled article regardless of audience; the anonymous
+ * public sees only published + enabled + `audience: 'public'` articles.
+ * Mirrors the audience-gating already established for FAQEntries.
+ */
+export const kbArticlesRead: Access = ({ req }) => {
+  if (req.user?.collection === 'users') return true
+  if (req.user?.collection === 'parents') {
+    const where: Where = {
+      and: [{ _status: { equals: 'published' } }, { enabled: { equals: true } }],
+    }
+    return where
+  }
+  const where: Where = {
+    and: [
+      { _status: { equals: 'published' } },
+      { enabled: { equals: true } },
+      { audience: { equals: 'public' } },
+    ],
+  }
+  return where
+}
+
+/** Knowledge base categories: any authenticated account (admin or parent). */
+export const kbCategoriesRead: Access = ({ req }) => Boolean(req.user)
 
 /**
  * Activities: admin sees all; a parent sees published activities of their own

@@ -526,6 +526,296 @@ async function run() {
     })
   }
 
+  // ---- Help centre: categories + knowledge base articles (parent assistant) ----
+  console.log('Seeding help centre…')
+  const kbCategoryDefs = [
+    { fr: 'Inscription', en: 'Registration', icon: '📝' },
+    { fr: 'Frais et paiements', en: 'Fees & payments', icon: '💰' },
+    { fr: 'Activités', en: 'Activities', icon: '🎨' },
+    { fr: 'Repas', en: 'Meals', icon: '🍎' },
+    { fr: 'Horaire', en: 'Schedule', icon: '🕖' },
+    { fr: 'Politiques', en: 'Policies', icon: '📋' },
+    { fr: 'Santé', en: 'Health', icon: '🩺' },
+    { fr: 'Événements', en: 'Events', icon: '🎉' },
+    { fr: 'Informations générales', en: 'General information', icon: 'ℹ️' },
+  ] as const
+
+  const kbCategoryIds: Record<string, number> = {}
+  for (const [i, c] of kbCategoryDefs.entries()) {
+    const doc = await payload.create({
+      collection: 'kb-categories',
+      locale: 'fr',
+      data: { name: c.fr, icon: c.icon, order: i, demoSeed: true },
+    })
+    await payload.update({ collection: 'kb-categories', id: doc.id, locale: 'en', data: { name: c.en } })
+    kbCategoryIds[c.fr] = doc.id as number
+  }
+
+  const kbArticles = [
+    {
+      category: 'Inscription',
+      audience: 'public',
+      fr: {
+        question: 'Comment inscrire un deuxième enfant ?',
+        answer: rt(
+          'Inscrivez votre enfant sur le guichet unique La Place 0-5 en sélectionnant notre CPE. Les fratries des enfants déjà inscrits ont priorité selon notre politique d’admission — mentionnez-le à la direction pour que votre dossier soit repéré.',
+        ),
+        keywords: ['fratrie', 'deuxième enfant', 'la place 0-5', 'priorité'],
+      },
+      en: {
+        question: 'How do I register a second child?',
+        answer: rt(
+          'Register your child on the single waiting list La Place 0-5 and select our CPE. Siblings of enrolled children have priority under our admission policy — tell the direction so your file is flagged.',
+        ),
+        keywords: ['sibling', 'second child', 'la place 0-5', 'priority'],
+      },
+    },
+    {
+      category: 'Frais et paiements',
+      audience: 'public',
+      fr: {
+        question: 'Quand recevrai-je mon relevé fiscal ?',
+        answer: rt(
+          'Le relevé 24 (frais de garde) est remis à chaque famille au plus tard le dernier jour de février pour l’année précédente. Il est déposé dans la section Documents du portail et envoyé par courriel.',
+        ),
+        keywords: ['relevé 24', 'impôts', 'reçu', 'fiscal'],
+      },
+      en: {
+        question: 'When will I receive my tax receipt?',
+        answer: rt(
+          'The Relevé 24 (childcare expenses) is issued to every family by the last day of February for the previous year. It is posted in the Documents section of the portal and sent by email.',
+        ),
+        keywords: ['releve 24', 'taxes', 'receipt', 'tax slip'],
+      },
+    },
+    {
+      category: 'Frais et paiements',
+      audience: 'public',
+      fr: {
+        question: 'Comment fonctionne le paiement de la contribution réduite ?',
+        answer: rt(
+          'Le tarif quotidien est fixé par le gouvernement du Québec et couvre les repas, les collations et les activités régulières. Le paiement se fait par prélèvement ou par chèque, selon l’entente prise avec l’administration.',
+        ),
+        keywords: ['tarif', 'prix', 'paiement', 'contribution réduite'],
+      },
+      en: {
+        question: 'How does the reduced-contribution payment work?',
+        answer: rt(
+          'The daily rate is set by the Québec government and covers meals, snacks and regular activities. Payment is by pre-authorized debit or cheque, as arranged with the administration.',
+        ),
+        keywords: ['rate', 'price', 'payment', 'reduced contribution'],
+      },
+    },
+    {
+      category: 'Repas',
+      audience: 'public',
+      fr: {
+        question: 'Que faire si mon enfant a une allergie alimentaire ?',
+        answer: rt(
+          'Informez la direction dès que possible : l’allergie est consignée au dossier de l’enfant, affichée en cuisine et communiquée à toute l’équipe. Les menus sont adaptés en conséquence. Le CPE est un milieu sans arachides ni noix.',
+        ),
+        keywords: ['allergie', 'intolérance', 'arachides', 'noix', 'épipen'],
+      },
+      en: {
+        question: 'What if my child has a food allergy?',
+        answer: rt(
+          'Tell the direction as soon as possible: the allergy is recorded in your child’s file, posted in the kitchen and shared with the whole team. Menus are adapted accordingly. The CPE is a peanut- and nut-free environment.',
+        ),
+        keywords: ['allergy', 'intolerance', 'peanut', 'nuts', 'epipen'],
+      },
+    },
+    {
+      category: 'Repas',
+      audience: 'public',
+      fr: {
+        question: 'Où trouver le menu de la semaine ?',
+        answer: rt(
+          'Le menu est affiché à l’entrée du CPE et déposé chaque mois dans la section Documents du portail parents. Les menus suivent une rotation de quatre semaines, adaptée aux saisons.',
+        ),
+        keywords: ['menu', 'repas', 'collation', 'semaine'],
+      },
+      en: {
+        question: 'Where can I find this week’s menu?',
+        answer: rt(
+          'The menu is posted at the CPE entrance and uploaded monthly to the Documents section of the parent portal. Menus follow a four-week rotation adapted to the seasons.',
+        ),
+        keywords: ['menu', 'meals', 'snack', 'week'],
+      },
+    },
+    {
+      category: 'Horaire',
+      audience: 'public',
+      fr: {
+        question: 'Quelles sont les heures d’ouverture ?',
+        answer: rt(
+          'Le CPE est ouvert du lundi au vendredi, de 7 h à 18 h. Les arrivées se font idéalement avant 9 h 30 pour ne pas interrompre les activités du groupe. Après 18 h, des frais de retard s’appliquent selon la politique en vigueur.',
+        ),
+        keywords: ['heures', 'ouverture', 'fermeture', 'retard'],
+      },
+      en: {
+        question: 'What are the opening hours?',
+        answer: rt(
+          'The CPE is open Monday to Friday, 7 a.m. to 6 p.m. Ideally arrive before 9:30 a.m. so group activities are not interrupted. After 6 p.m., late fees apply as per the current policy.',
+        ),
+        keywords: ['hours', 'opening', 'closing', 'late'],
+      },
+    },
+    {
+      category: 'Santé',
+      audience: 'public',
+      fr: {
+        question: 'Mon enfant fait de la fièvre : puis-je l’amener au CPE ?',
+        answer: rt(
+          'Non — un enfant fiévreux (38,5 °C et plus) doit rester à la maison jusqu’à 24 heures sans fièvre, sans médicament. Si la fièvre apparaît au CPE, nous vous appelons pour que l’enfant soit récupéré dans l’heure.',
+        ),
+        keywords: ['fièvre', 'malade', 'maladie', 'température'],
+      },
+      en: {
+        question: 'My child has a fever — can they come to the CPE?',
+        answer: rt(
+          'No — a child with a fever (38.5 °C or higher) must stay home until 24 hours fever-free without medication. If a fever starts at the CPE, we call you and the child must be picked up within the hour.',
+        ),
+        keywords: ['fever', 'sick', 'illness', 'temperature'],
+      },
+    },
+    {
+      category: 'Santé',
+      audience: 'public',
+      fr: {
+        question: 'Pouvez-vous administrer un médicament à mon enfant ?',
+        answer: rt(
+          'Oui, sur ordonnance seulement et avec une autorisation écrite signée. Le médicament doit être dans son contenant d’origine, étiqueté au nom de l’enfant. L’acétaminophène est administré selon le protocole du ministère.',
+        ),
+        keywords: ['médicament', 'ordonnance', 'acétaminophène', 'protocole'],
+      },
+      en: {
+        question: 'Can you give my child medication?',
+        answer: rt(
+          'Yes, prescription only and with signed written authorization. The medication must be in its original container, labelled with the child’s name. Acetaminophen is administered under the ministry protocol.',
+        ),
+        keywords: ['medication', 'prescription', 'acetaminophen', 'protocol'],
+      },
+    },
+    {
+      category: 'Politiques',
+      audience: 'portal',
+      fr: {
+        question: 'Comment signaler une absence ou un retard ?',
+        answer: rt(
+          'Téléphonez-nous ou écrivez-nous avant 9 h le matin même. Pour une absence prolongée (vacances, maladie), prévenez l’éducatrice de votre groupe dès que possible.',
+        ),
+        keywords: ['absence', 'retard', 'vacances', 'signaler'],
+      },
+      en: {
+        question: 'How do I report an absence or lateness?',
+        answer: rt(
+          'Call or email us before 9 a.m. that morning. For a longer absence (vacation, illness), let your group’s educator know as soon as possible.',
+        ),
+        keywords: ['absence', 'late', 'vacation', 'report'],
+      },
+    },
+    {
+      category: 'Politiques',
+      audience: 'public',
+      fr: {
+        question: 'Quoi mettre dans le sac de mon enfant ?',
+        answer: rt(
+          'Chaque jour : vêtements de rechange identifiés, vêtements adaptés à la météo (nous sortons tous les jours), doudou pour la sieste et, pour les poupons, couches et crème. Tout doit être identifié au nom de l’enfant.',
+        ),
+        keywords: ['sac', 'vêtements', 'rechange', 'doudou', 'couches'],
+      },
+      en: {
+        question: 'What should I pack in my child’s bag?',
+        answer: rt(
+          'Every day: labelled spare clothes, weather-appropriate clothing (we go outside daily), a comfort blanket for nap time and, for infants, diapers and cream. Everything must be labelled with the child’s name.',
+        ),
+        keywords: ['bag', 'clothes', 'spare', 'blanket', 'diapers'],
+      },
+    },
+    {
+      category: 'Activités',
+      audience: 'public',
+      fr: {
+        question: 'Les enfants sortent-ils dehors tous les jours ?',
+        answer: rt(
+          'Oui, beau temps comme temps froid — deux sorties par jour dans la cour, sauf en cas de conditions extrêmes (froid sous −25 °C avec le vent, smog, orage). Habillez votre enfant en conséquence.',
+        ),
+        keywords: ['dehors', 'extérieur', 'cour', 'hiver', 'sortie'],
+      },
+      en: {
+        question: 'Do the children go outside every day?',
+        answer: rt(
+          'Yes, in fair weather and cold alike — two outdoor periods a day in the yard, except in extreme conditions (below −25 °C with wind chill, smog, thunderstorms). Dress your child accordingly.',
+        ),
+        keywords: ['outside', 'outdoor', 'yard', 'winter', 'outing'],
+      },
+    },
+    {
+      category: 'Événements',
+      audience: 'public',
+      fr: {
+        question: 'Comment être informé des événements et sorties à venir ?',
+        answer: rt(
+          'Les événements sont publiés dans la section Annonces du portail, et les sorties propres à votre groupe apparaissent dans Activités. Les annonces importantes sont aussi envoyées par courriel.',
+        ),
+        keywords: ['événement', 'sortie', 'calendrier', 'fête'],
+      },
+      en: {
+        question: 'How do I stay informed about upcoming events and outings?',
+        answer: rt(
+          'Events are published in the Announcements section of the portal, and your group’s outings appear under Activities. Important announcements are also sent by email.',
+        ),
+        keywords: ['event', 'outing', 'calendar', 'party'],
+      },
+    },
+    {
+      category: 'Informations générales',
+      audience: 'portal',
+      fr: {
+        question: 'Comment modifier mes coordonnées ou personnes autorisées ?',
+        answer: rt(
+          'Écrivez à l’administration ou passez au bureau : la mise à jour des numéros d’urgence et des personnes autorisées à récupérer votre enfant se fait le jour même. Une pièce d’identité est exigée pour toute personne inconnue de l’équipe.',
+        ),
+        keywords: ['coordonnées', 'urgence', 'personnes autorisées', 'téléphone'],
+      },
+      en: {
+        question: 'How do I update my contact details or authorized pick-up people?',
+        answer: rt(
+          'Write to the administration or stop by the office: emergency numbers and authorized pick-up people are updated the same day. Photo ID is required for anyone the team does not know.',
+        ),
+        keywords: ['contact', 'emergency', 'authorized pickup', 'phone'],
+      },
+    },
+  ] as const
+
+  for (const a of kbArticles) {
+    const doc = await payload.create({
+      collection: 'kb-articles',
+      locale: 'fr',
+      data: {
+        question: a.fr.question,
+        answer: a.fr.answer,
+        keywords: a.fr.keywords.map((term) => ({ term })),
+        category: kbCategoryIds[a.category],
+        audience: a.audience,
+        enabled: true,
+        demoSeed: true,
+        _status: 'published',
+      },
+    })
+    await payload.update({
+      collection: 'kb-articles',
+      id: doc.id,
+      locale: 'en',
+      data: {
+        question: a.en.question,
+        answer: a.en.answer,
+        keywords: a.en.keywords.map((term) => ({ term })),
+        _status: 'published',
+      },
+    })
+  }
+
   // ---- Closures ----
   const year = new Date().getFullYear()
   const closures = [
@@ -849,6 +1139,7 @@ async function run() {
     { fr: 'Menu de la semaine (démo)', en: 'Weekly menu (demo)', category: 'menus' as const, audience: 'portal' as const },
     { fr: 'Politique en cas de maladie (démo)', en: 'Illness policy (demo)', category: 'politiques' as const, audience: 'portal' as const },
   ]
+  const documentIds: number[] = []
   for (const d of docDefs) {
     const pdf = makeDemoPdf(d.fr)
     const doc = await payload.create({
@@ -863,54 +1154,232 @@ async function run() {
       },
     })
     await payload.update({ collection: 'documents', id: doc.id, locale: 'en', data: { title: d.en } })
+    documentIds.push(doc.id as number)
+  }
+  const [, menuDocId, policyDocId] = documentIds
+
+  // ---- Announcements & news centre (every kind represented) ----
+  console.log('Seeding news centre…')
+  type AnnouncementSeed = {
+    fr: { title: string; body: ReturnType<typeof rt> }
+    en: { title: string; body: ReturnType<typeof rt> }
+    kind: 'news' | 'event' | 'reminder' | 'holiday'
+    scope: 'cpe' | 'groups'
+    groups?: number[]
+    pinned?: boolean
+    archived?: boolean
+    eventDate?: string
+    publishAt?: string
+    expiresAt?: string
+    image?: number
+    attachments?: number[]
   }
 
-  // ---- Group-scoped announcement (visible only to Papillons parents) ----
-  const annPapillons = await payload.create({
-    collection: 'announcements',
-    locale: 'fr',
-    data: {
-      title: 'Papillons : chapeau obligatoire cette semaine',
-      body: rt('Avec la vague de chaleur annoncée, merci de laisser un chapeau identifié au vestiaire de votre enfant toute la semaine.'),
+  const announcementDefs: AnnouncementSeed[] = [
+    {
+      kind: 'reminder',
+      scope: 'cpe',
+      pinned: true,
+      fr: {
+        title: 'Rappel : photos de groupe la semaine prochaine',
+        body: rt('La photographe sera au CPE mardi prochain en avant-midi. Le formulaire de consentement doit être signé au préalable.'),
+      },
+      en: {
+        title: 'Reminder: group photos next week',
+        body: rt('The photographer will be at the CPE next Tuesday morning. The consent form must be signed beforehand.'),
+      },
+    },
+    {
+      kind: 'reminder',
       scope: 'groups',
       groups: [papillons],
-      pinned: false,
+      fr: {
+        title: 'Papillons : chapeau obligatoire cette semaine',
+        body: rt('Avec la vague de chaleur annoncée, merci de laisser un chapeau identifié au vestiaire de votre enfant toute la semaine.'),
+      },
+      en: {
+        title: 'Papillons: hat required this week',
+        body: rt('With the announced heat wave, please leave a labelled hat in your child’s cubby all week.'),
+      },
+    },
+    {
+      kind: 'news',
+      scope: 'cpe',
+      image: img.histoires,
+      fr: {
+        title: 'Bienvenue à Camille, nouvelle éducatrice (démo)',
+        body: rt(
+          'Nous accueillons Camille (personnage fictif de démonstration) dans l’équipe des Lapinots. Passionnée de littérature jeunesse, elle animera aussi l’heure du conte du vendredi.',
+        ),
+      },
+      en: {
+        title: 'Welcome Camille, our new educator (demo)',
+        body: rt(
+          'We welcome Camille (a fictional demonstration character) to the Lapinots team. Passionate about children’s literature, she will also lead Friday story time.',
+        ),
+      },
+    },
+    {
+      kind: 'event',
+      scope: 'cpe',
+      eventDate: day(12),
+      image: img.pique_nique,
+      fr: {
+        title: 'Pique-nique des familles au parc',
+        body: rt(
+          'Toutes les familles sont invitées à notre grand pique-nique annuel. Apportez votre couverture — le CPE fournit les collations et les jeux !',
+        ),
+      },
+      en: {
+        title: 'Family picnic at the park',
+        body: rt(
+          'All families are invited to our big annual picnic. Bring your blanket — the CPE provides snacks and games!',
+        ),
+      },
+    },
+    {
+      kind: 'news',
+      scope: 'cpe',
+      attachments: [menuDocId],
+      fr: {
+        title: 'Nouveau menu de saison',
+        body: rt('Le menu des quatre prochaines semaines est en ligne. Vous le trouverez aussi dans la section Documents.'),
+      },
+      en: {
+        title: 'New seasonal menu',
+        body: rt('The menu for the next four weeks is online. You will also find it in the Documents section.'),
+      },
+    },
+    {
+      kind: 'holiday',
+      scope: 'cpe',
+      expiresAt: day(35),
+      fr: {
+        title: 'Fermeture : journée pédagogique',
+        body: rt('Le CPE sera fermé pour la journée pédagogique. Consultez le calendrier des fermetures pour l’année complète.'),
+      },
+      en: {
+        title: 'Closure: pedagogical day',
+        body: rt('The CPE will be closed for the pedagogical day. See the closure calendar for the full year.'),
+      },
+    },
+    {
+      // Scheduled in the future: parents must NOT see this one yet.
+      kind: 'news',
+      scope: 'cpe',
+      publishAt: new Date(Date.now() + 7 * 86400000).toISOString(),
+      fr: {
+        title: 'Inscriptions à la sortie d’hiver (à venir)',
+        body: rt('Les détails de la sortie d’hiver seront annoncés ici la semaine prochaine.'),
+      },
+      en: {
+        title: 'Winter outing registration (coming up)',
+        body: rt('Details of the winter outing will be announced here next week.'),
+      },
+    },
+    {
+      // Archived: browsable in the portal archive section.
+      kind: 'news',
+      scope: 'cpe',
+      archived: true,
+      attachments: [policyDocId],
+      fr: {
+        title: 'Retour sur la rentrée',
+        body: rt('Merci à toutes les familles pour une rentrée tout en douceur. La politique en cas de maladie mise à jour reste jointe pour référence.'),
+      },
+      en: {
+        title: 'Looking back on the start of the year',
+        body: rt('Thank you to every family for such a smooth start. The updated illness policy remains attached for reference.'),
+      },
+    },
+  ]
+
+  for (const a of announcementDefs) {
+    const doc = await payload.create({
+      collection: 'announcements',
+      locale: 'fr',
+      data: {
+        title: a.fr.title,
+        body: a.fr.body,
+        kind: a.kind,
+        scope: a.scope,
+        groups: a.groups,
+        pinned: a.pinned ?? false,
+        archived: a.archived ?? false,
+        eventDate: a.eventDate,
+        publishAt: a.publishAt,
+        expiresAt: a.expiresAt,
+        image: a.image,
+        attachments: a.attachments,
+        demoSeed: true,
+        _status: 'published',
+      },
+    })
+    await payload.update({
+      collection: 'announcements',
+      id: doc.id,
+      locale: 'en',
+      data: { title: a.en.title, body: a.en.body, _status: 'published' },
+    })
+  }
+
+  // ---- Email campaigns (draft + scheduled examples; nothing is sent by the seed) ----
+  const campaignDraft = await payload.create({
+    collection: 'email-campaigns',
+    locale: 'fr',
+    data: {
+      title: 'Bienvenue de la nouvelle éducatrice (démo)',
+      subject: 'Une nouvelle éducatrice se joint aux Lapinots',
+      body: rt(
+        'Bonjour,',
+        'Nous sommes heureux d’accueillir Camille (personnage fictif de démonstration) dans l’équipe des Lapinots. Elle animera notamment l’heure du conte du vendredi.',
+        'Tous les détails se trouvent dans le portail parents.',
+      ),
+      audience: 'all',
+      status: 'draft',
       demoSeed: true,
-      _status: 'published',
     },
   })
   await payload.update({
-    collection: 'announcements',
-    id: annPapillons.id,
+    collection: 'email-campaigns',
+    id: campaignDraft.id,
     locale: 'en',
     data: {
-      title: 'Papillons: hat required this week',
-      body: rt('With the announced heat wave, please leave a labelled hat in your child’s cubby all week.'),
-      _status: 'published',
+      subject: 'A new educator joins the Lapinots',
+      body: rt(
+        'Hello,',
+        'We are delighted to welcome Camille (a fictional demonstration character) to the Lapinots team. Among other things, she will lead Friday story time.',
+        'All the details are in the parent portal.',
+      ),
     },
   })
 
-  // ---- Announcement ----
-  const ann = await payload.create({
-    collection: 'announcements',
+  const campaignScheduled = await payload.create({
+    collection: 'email-campaigns',
     locale: 'fr',
     data: {
-      title: 'Rappel : photos de groupe la semaine prochaine',
-      body: rt('La photographe sera au CPE mardi prochain en avant-midi. Le formulaire de consentement doit être signé au préalable.'),
-      scope: 'cpe',
-      pinned: true,
+      title: 'Rappel pique-nique (démo, planifiée)',
+      subject: 'Rappel : pique-nique des familles ce samedi',
+      body: rt(
+        'Bonjour,',
+        'Petit rappel : le grand pique-nique des familles a lieu ce samedi au parc. Apportez votre couverture — le CPE fournit collations et jeux !',
+      ),
+      audience: 'all',
+      status: 'scheduled',
+      scheduledAt: new Date(Date.now() + 2 * 86400000).toISOString(),
       demoSeed: true,
-      _status: 'published',
     },
   })
   await payload.update({
-    collection: 'announcements',
-    id: ann.id,
+    collection: 'email-campaigns',
+    id: campaignScheduled.id,
     locale: 'en',
     data: {
-      title: 'Reminder: group photos next week',
-      body: rt('The photographer will be at the CPE next Tuesday morning. The consent form must be signed beforehand.'),
-      _status: 'published',
+      subject: 'Reminder: family picnic this Saturday',
+      body: rt(
+        'Hello,',
+        'A quick reminder: the big family picnic takes place this Saturday at the park. Bring your blanket — the CPE provides snacks and games!',
+      ),
     },
   })
 

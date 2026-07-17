@@ -46,13 +46,39 @@ export function NotifyButton() {
     }
   }
 
+  const createCampaign = async () => {
+    setBusy(true)
+    try {
+      const res = await fetch(`/api/${collectionSlug}/${id}/create-campaign`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      })
+      const info = await res.json()
+      if (!res.ok) {
+        toast.error(info.error || 'Erreur')
+        return
+      }
+      toast.success('Campagne courriel créée — vous y êtes redirigé.')
+      window.location.assign(info.adminUrl)
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
-    <div style={{ marginBottom: '1rem' }}>
+    <div style={{ marginBottom: '1rem', display: 'grid', gap: '0.5rem' }}>
       <Button onClick={run} disabled={busy} buttonStyle="secondary" size="medium">
         {busy ? 'Envoi…' : '✉ Notifier les parents'}
       </Button>
-      <p style={{ fontSize: '0.75rem', margin: '0.4rem 0 0', opacity: 0.7 }}>
-        Publiez d’abord, puis notifiez. Chaque envoi est consigné au journal des notifications.
+      {collectionSlug === 'announcements' && (
+        <Button onClick={createCampaign} disabled={busy} buttonStyle="secondary" size="medium">
+          📨 Créer une campagne courriel
+        </Button>
+      )}
+      <p style={{ fontSize: '0.75rem', margin: 0, opacity: 0.7 }}>
+        Publiez d’abord, puis notifiez — ou transformez l’annonce en campagne courriel complète.
+        Chaque envoi est consigné au journal des notifications.
       </p>
     </div>
   )

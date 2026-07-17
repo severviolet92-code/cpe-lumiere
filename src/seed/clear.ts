@@ -11,6 +11,9 @@ import { getPayload } from 'payload'
 import config from '../payload.config'
 
 const COLLECTIONS = [
+  'email-campaigns',
+  'kb-articles',
+  'kb-categories',
   'parents',
   'gallery-photos',
   'activities',

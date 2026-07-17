@@ -81,6 +81,10 @@ export interface Config {
     'gallery-photos': GalleryPhoto;
     parents: Parent;
     'notification-log': NotificationLog;
+    'kb-categories': KbCategory;
+    'kb-articles': KbArticle;
+    'email-campaigns': EmailCampaign;
+    'question-log': QuestionLog;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -101,6 +105,10 @@ export interface Config {
     'gallery-photos': GalleryPhotosSelect<false> | GalleryPhotosSelect<true>;
     parents: ParentsSelect<false> | ParentsSelect<true>;
     'notification-log': NotificationLogSelect<false> | NotificationLogSelect<true>;
+    'kb-categories': KbCategoriesSelect<false> | KbCategoriesSelect<true>;
+    'kb-articles': KbArticlesSelect<false> | KbArticlesSelect<true>;
+    'email-campaigns': EmailCampaignsSelect<false> | EmailCampaignsSelect<true>;
+    'question-log': QuestionLogSelect<false> | QuestionLogSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -325,6 +333,11 @@ export interface Activity {
 export interface Announcement {
   id: number;
   title: string;
+  kind: 'news' | 'event' | 'reminder' | 'holiday';
+  /**
+   * Upcoming events are highlighted in the portal.
+   */
+  eventDate?: string | null;
   body: {
     root: {
       type: string;
@@ -340,14 +353,58 @@ export interface Announcement {
     };
     [k: string]: unknown;
   };
+  image?: (number | null) | Media;
+  /**
+   * Paste the video link (preferably unlisted). It is embedded in the portal.
+   */
+  videoUrl?: string | null;
+  /**
+   * Upload the PDF to Documents first, then attach it here.
+   */
+  attachments?: (number | Document)[] | null;
   scope: 'cpe' | 'groups';
   groups?: (number | Group)[] | null;
   pinned?: boolean | null;
+  /**
+   * Publish as usual: the announcement stays hidden from parents until this moment.
+   */
+  publishAt?: string | null;
+  /**
+   * Leaves the main feed but remains available in the portal archives.
+   */
+  archived?: boolean | null;
+  /**
+   * After this date the announcement is automatically filed under archives.
+   */
   expiresAt?: string | null;
   demoSeed?: boolean | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
+}
+/**
+ * Downloadable documents: menus, policies, guides. No document may contain personal information.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "documents".
+ */
+export interface Document {
+  id: number;
+  title: string;
+  category: 'menus' | 'politiques' | 'guides' | 'general';
+  audience: 'public' | 'portal';
+  demoSeed?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
 }
 /**
  * CPE closure days (holidays, pedagogical days).
@@ -395,30 +452,6 @@ export interface FaqEntry {
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
-}
-/**
- * Downloadable documents: menus, policies, guides. No document may contain personal information.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "documents".
- */
-export interface Document {
-  id: number;
-  title: string;
-  category: 'menus' | 'politiques' | 'guides' | 'general';
-  audience: 'public' | 'portal';
-  demoSeed?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
 }
 /**
  * Public team presentation. The person’s written consent is required before publishing.
@@ -557,11 +590,154 @@ export interface Parent {
 export interface NotificationLog {
   id: number;
   title: string;
-  sourceType: 'activity' | 'announcement';
+  sourceType: 'activity' | 'announcement' | 'campaign';
   sourceId: number;
   audience: string;
   recipients: number;
-  sentBy: number | User;
+  delivered?: number | null;
+  failed?: number | null;
+  sentBy?: (number | null) | User;
+  trigger?: ('manual' | 'schedule') | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Help centre article categories (e.g. Registration, Fees, Meals). Order controls display in the portal.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "kb-categories".
+ */
+export interface KbCategory {
+  id: number;
+  name: string;
+  /**
+   * A single emoji, e.g. 🍎
+   */
+  icon?: string | null;
+  order?: number | null;
+  demoSeed?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Official answers served by the parent portal assistant. Save as draft to preview, publish to make visible. Keywords improve search.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "kb-articles".
+ */
+export interface KbArticle {
+  id: number;
+  question: string;
+  /**
+   * Rich text: bold, lists and links are preserved in the assistant.
+   */
+  answer: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  image?: (number | null) | Media;
+  category: number | KbCategory;
+  /**
+   * Public: answers anonymous visitors on /faq and signed-in parents. Portal only: signed-in parents only.
+   */
+  audience: 'public' | 'portal';
+  /**
+   * Synonyms and variants parents might type (e.g. “fee”, “price”, “payment”).
+   */
+  keywords?:
+    | {
+        term: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Uncheck to temporarily hide the article without deleting it.
+   */
+  enabled?: boolean | null;
+  demoSeed?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * Emails to parents: draft → preview → send (immediate or scheduled). Every send is recorded in the notification log.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "email-campaigns".
+ */
+export interface EmailCampaign {
+  id: number;
+  /**
+   * Visible to the team only (e.g. “Back-to-school reminder 2026”).
+   */
+  title: string;
+  subject: string;
+  /**
+   * The message is wrapped in the CPE-branded template — use the preview.
+   */
+  body: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  audience: 'all' | 'groups';
+  groups?: (number | Group)[] | null;
+  /**
+   * Filled automatically when the campaign is created from an announcement.
+   */
+  relatedAnnouncement?: (number | null) | Announcement;
+  /**
+   * Leave empty for manual send. Scheduled sends go out on the scheduler’s next pass.
+   */
+  scheduledAt?: string | null;
+  status: 'draft' | 'scheduled' | 'sending' | 'sent' | 'failed';
+  sentAt?: string | null;
+  recipientsCount?: number | null;
+  deliveredCount?: number | null;
+  failedCount?: number | null;
+  /**
+   * Failed addresses, if any.
+   */
+  deliveryNote?: string | null;
+  demoSeed?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Questions asked to the assistant, scrubbed of personal information. Filter by “Refused” to spot content gaps.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "question-log".
+ */
+export interface QuestionLog {
+  id: number;
+  question: string;
+  locale: 'fr' | 'en';
+  audience: 'public' | 'portal';
+  outcome: 'answered' | 'refused' | 'gated';
+  matchedArticles?: (number | KbArticle)[] | null;
+  askedBy?: (number | null) | Parent;
   updatedAt: string;
   createdAt: string;
 }
@@ -640,6 +816,22 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'notification-log';
         value: number | NotificationLog;
+      } | null)
+    | ({
+        relationTo: 'kb-categories';
+        value: number | KbCategory;
+      } | null)
+    | ({
+        relationTo: 'kb-articles';
+        value: number | KbArticle;
+      } | null)
+    | ({
+        relationTo: 'email-campaigns';
+        value: number | EmailCampaign;
+      } | null)
+    | ({
+        relationTo: 'question-log';
+        value: number | QuestionLog;
       } | null);
   globalSlug?: string | null;
   user:
@@ -814,10 +1006,17 @@ export interface ActivitiesSelect<T extends boolean = true> {
  */
 export interface AnnouncementsSelect<T extends boolean = true> {
   title?: T;
+  kind?: T;
+  eventDate?: T;
   body?: T;
+  image?: T;
+  videoUrl?: T;
+  attachments?: T;
   scope?: T;
   groups?: T;
   pinned?: T;
+  publishAt?: T;
+  archived?: T;
   expiresAt?: T;
   demoSeed?: T;
   updatedAt?: T;
@@ -985,7 +1184,80 @@ export interface NotificationLogSelect<T extends boolean = true> {
   sourceId?: T;
   audience?: T;
   recipients?: T;
+  delivered?: T;
+  failed?: T;
   sentBy?: T;
+  trigger?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "kb-categories_select".
+ */
+export interface KbCategoriesSelect<T extends boolean = true> {
+  name?: T;
+  icon?: T;
+  order?: T;
+  demoSeed?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "kb-articles_select".
+ */
+export interface KbArticlesSelect<T extends boolean = true> {
+  question?: T;
+  answer?: T;
+  image?: T;
+  category?: T;
+  audience?: T;
+  keywords?:
+    | T
+    | {
+        term?: T;
+        id?: T;
+      };
+  enabled?: T;
+  demoSeed?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "email-campaigns_select".
+ */
+export interface EmailCampaignsSelect<T extends boolean = true> {
+  title?: T;
+  subject?: T;
+  body?: T;
+  audience?: T;
+  groups?: T;
+  relatedAnnouncement?: T;
+  scheduledAt?: T;
+  status?: T;
+  sentAt?: T;
+  recipientsCount?: T;
+  deliveredCount?: T;
+  failedCount?: T;
+  deliveryNote?: T;
+  demoSeed?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "question-log_select".
+ */
+export interface QuestionLogSelect<T extends boolean = true> {
+  question?: T;
+  locale?: T;
+  audience?: T;
+  outcome?: T;
+  matchedArticles?: T;
+  askedBy?: T;
   updatedAt?: T;
   createdAt?: T;
 }
