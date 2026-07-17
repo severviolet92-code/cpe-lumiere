@@ -1174,6 +1174,12 @@ summary:focus-visible {
   align-self: flex-end;
 }
 
+.assistant__bubble--gated {
+  background: var(--terracotta-whisper);
+  border: 1px solid var(--terracotta);
+  color: var(--terracotta-deep);
+}
+
 .assistant__bubble--busy {
   color: var(--ink-faint);
   font-style: italic;

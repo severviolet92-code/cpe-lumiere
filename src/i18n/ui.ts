@@ -177,6 +177,7 @@ export const ui = {
         inputLabel: 'Votre question',
         eventsIntro: 'À l’agenda pour vos groupes :',
         eventsLink: 'Voir toutes les annonces',
+        rateLimited: 'Trop de questions en peu de temps. Prenez une pause et réessayez dans quelques minutes.',
       },
     },
     footer: {
@@ -360,6 +361,7 @@ export const ui = {
         inputLabel: 'Your question',
         eventsIntro: 'Coming up for your groups:',
         eventsLink: 'See all announcements',
+        rateLimited: 'Too many questions in a short time. Take a break and try again in a few minutes.',
       },
     },
     footer: {

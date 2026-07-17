@@ -554,6 +554,7 @@ async function run() {
   const kbArticles = [
     {
       category: 'Inscription',
+      audience: 'public',
       fr: {
         question: 'Comment inscrire un deuxième enfant ?',
         answer: rt(
@@ -571,6 +572,7 @@ async function run() {
     },
     {
       category: 'Frais et paiements',
+      audience: 'public',
       fr: {
         question: 'Quand recevrai-je mon relevé fiscal ?',
         answer: rt(
@@ -588,6 +590,7 @@ async function run() {
     },
     {
       category: 'Frais et paiements',
+      audience: 'public',
       fr: {
         question: 'Comment fonctionne le paiement de la contribution réduite ?',
         answer: rt(
@@ -605,6 +608,7 @@ async function run() {
     },
     {
       category: 'Repas',
+      audience: 'public',
       fr: {
         question: 'Que faire si mon enfant a une allergie alimentaire ?',
         answer: rt(
@@ -622,6 +626,7 @@ async function run() {
     },
     {
       category: 'Repas',
+      audience: 'public',
       fr: {
         question: 'Où trouver le menu de la semaine ?',
         answer: rt(
@@ -639,6 +644,7 @@ async function run() {
     },
     {
       category: 'Horaire',
+      audience: 'public',
       fr: {
         question: 'Quelles sont les heures d’ouverture ?',
         answer: rt(
@@ -656,6 +662,7 @@ async function run() {
     },
     {
       category: 'Santé',
+      audience: 'public',
       fr: {
         question: 'Mon enfant fait de la fièvre : puis-je l’amener au CPE ?',
         answer: rt(
@@ -673,6 +680,7 @@ async function run() {
     },
     {
       category: 'Santé',
+      audience: 'public',
       fr: {
         question: 'Pouvez-vous administrer un médicament à mon enfant ?',
         answer: rt(
@@ -690,6 +698,7 @@ async function run() {
     },
     {
       category: 'Politiques',
+      audience: 'portal',
       fr: {
         question: 'Comment signaler une absence ou un retard ?',
         answer: rt(
@@ -707,6 +716,7 @@ async function run() {
     },
     {
       category: 'Politiques',
+      audience: 'public',
       fr: {
         question: 'Quoi mettre dans le sac de mon enfant ?',
         answer: rt(
@@ -724,6 +734,7 @@ async function run() {
     },
     {
       category: 'Activités',
+      audience: 'public',
       fr: {
         question: 'Les enfants sortent-ils dehors tous les jours ?',
         answer: rt(
@@ -741,6 +752,7 @@ async function run() {
     },
     {
       category: 'Événements',
+      audience: 'public',
       fr: {
         question: 'Comment être informé des événements et sorties à venir ?',
         answer: rt(
@@ -758,6 +770,7 @@ async function run() {
     },
     {
       category: 'Informations générales',
+      audience: 'portal',
       fr: {
         question: 'Comment modifier mes coordonnées ou personnes autorisées ?',
         answer: rt(
@@ -784,6 +797,7 @@ async function run() {
         answer: a.fr.answer,
         keywords: a.fr.keywords.map((term) => ({ term })),
         category: kbCategoryIds[a.category],
+        audience: a.audience,
         enabled: true,
         demoSeed: true,
         _status: 'published',

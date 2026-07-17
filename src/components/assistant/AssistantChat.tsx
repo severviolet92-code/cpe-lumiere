@@ -24,13 +24,20 @@ type KBEvent = { id: number; title: string; eventDate: string }
 type ChatEntry =
   | { key: number; role: 'user'; text: string }
   | { key: number; role: 'assistant'; results: KBResult[]; events: KBEvent[] }
+  | { key: number; role: 'gated'; message: string }
   | { key: number; role: 'error' }
+  | { key: number; role: 'rate-limited' }
 
 /**
- * Chat-style help assistant. Deterministic: every answer is an article the
- * administration wrote and published — the assistant only finds and shows it.
+ * Chat-style help assistant, shared by the public FAQ page and the parent
+ * portal help centre — same component, same endpoint. The server (not this
+ * component) decides audience scope from the session, so there is no
+ * client-side trust involved: an anonymous visitor and a signed-in parent
+ * hitting the same endpoint simply get different result sets.
+ * Deterministic: every answer is an article the administration wrote and
+ * published — the assistant only finds and shows it, never generates one.
  */
-export function PortalAssistant({
+export function AssistantChat({
   locale,
   suggestions,
 }: {
@@ -60,8 +67,24 @@ export function PortalAssistant({
         `/api/kb-articles/search?q=${encodeURIComponent(q)}&locale=${locale}`,
         { credentials: 'include' },
       )
+      if (res.status === 429) {
+        setEntries((prev) => [...prev, { key: ++keyRef.current, role: 'rate-limited' }])
+        return
+      }
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const data = (await res.json()) as { results: KBResult[]; events?: KBEvent[] }
+      const data = (await res.json()) as {
+        gated?: boolean
+        message?: string
+        results: KBResult[]
+        events?: KBEvent[]
+      }
+      if (data.gated) {
+        setEntries((prev) => [
+          ...prev,
+          { key: ++keyRef.current, role: 'gated', message: data.message || dict.portal.assistant.fallback },
+        ])
+        return
+      }
       setEntries((prev) => [
         ...prev,
         { key: ++keyRef.current, role: 'assistant', results: data.results, events: data.events || [] },
@@ -95,6 +118,26 @@ export function PortalAssistant({
               </div>
             )
           }
+          if (entry.role === 'rate-limited') {
+            return (
+              <div className="assistant__bubble assistant__bubble--bot" key={entry.key}>
+                <p style={{ margin: 0 }}>{dict.portal.assistant.rateLimited}</p>
+              </div>
+            )
+          }
+          if (entry.role === 'gated') {
+            return (
+              <div className="assistant__bubble assistant__bubble--bot assistant__bubble--gated" key={entry.key}>
+                <p style={{ margin: 0 }}>⚠️ {entry.message}</p>
+                <p style={{ margin: '0.8rem 0 0' }}>
+                  <Link className="btn btn--ghost" href={localizedPath(locale, '/contact')}>
+                    {dict.portal.assistant.contactCta}
+                  </Link>
+                </p>
+              </div>
+            )
+          }
+
           const eventsBlock = entry.events.length > 0 && (
             <div className="assistant__events">
               <p className="assistant__intro" style={{ marginTop: '0.9rem' }}>

@@ -81,8 +81,11 @@ export const developerFieldOnly: FieldAccess = ({ req }) =>
   req.user?.collection === 'users' && req.user.role === 'developer'
 
 /**
- * Knowledge base articles: admin sees everything; parents see published AND
- * enabled articles only; never public (the public FAQ page has its own content).
+ * Knowledge base articles, feeding the parent assistant (portal) and the
+ * public help centre (/faq): admin sees everything; a signed-in parent sees
+ * every published + enabled article regardless of audience; the anonymous
+ * public sees only published + enabled + `audience: 'public'` articles.
+ * Mirrors the audience-gating already established for FAQEntries.
  */
 export const kbArticlesRead: Access = ({ req }) => {
   if (req.user?.collection === 'users') return true
@@ -92,7 +95,14 @@ export const kbArticlesRead: Access = ({ req }) => {
     }
     return where
   }
-  return false
+  const where: Where = {
+    and: [
+      { _status: { equals: 'published' } },
+      { enabled: { equals: true } },
+      { audience: { equals: 'public' } },
+    ],
+  }
+  return where
 }
 
 /** Knowledge base categories: any authenticated account (admin or parent). */

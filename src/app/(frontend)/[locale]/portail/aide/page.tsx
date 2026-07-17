@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound, redirect } from 'next/navigation'
 
-import { PortalAssistant } from '../../../../../components/portal/PortalAssistant'
+import { AssistantChat } from '../../../../../components/assistant/AssistantChat'
 import { PortalShell } from '../../../../../components/portal/PortalShell'
 import { RichTextBlock } from '../../../../../components/RichTextBlock'
 import { isLocale, localizedPath, type Locale } from '../../../../../i18n/config'
@@ -67,7 +67,7 @@ export default async function PortalHelpPage({
         {dict.portal.assistant.lede}
       </p>
 
-      <PortalAssistant locale={locale} suggestions={suggestions} />
+      <AssistantChat locale={locale} suggestions={suggestions} />
 
       <section style={{ marginTop: '3.5rem', maxWidth: '820px' }}>
         <h2 style={{ fontSize: '1.5rem' }}>{dict.portal.assistant.browseTitle}</h2>

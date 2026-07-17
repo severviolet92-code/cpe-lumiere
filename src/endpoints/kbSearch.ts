@@ -2,33 +2,86 @@ import type { Endpoint, PayloadRequest } from 'payload'
 
 import { isLocale, type Locale } from '../i18n/config'
 import { hasEventIntent, lexicalPlainText, rankArticles, type SearchableArticle } from '../lib/kbSearch'
+import { scrubPii } from '../lib/piiScrub'
+import { isRateLimited } from '../lib/rateLimit'
+import { detectRiskCategory, GATED_MESSAGE } from '../lib/riskGate'
 
 const MAX_RESULTS = 3
 /** Results scoring far below the best match are noise, not alternatives. */
 const RELATIVE_SCORE_FLOOR = 0.35
+const RATE_LIMIT_MAX = 10
+const RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000
+
+function requesterIp(req: PayloadRequest): string {
+  const header = req.headers.get('x-forwarded-for') || ''
+  return header.split(',')[0].trim() || 'local'
+}
 
 /**
  * GET /api/kb-articles/search?q=…&locale=fr
- * Ranked keyword search over the knowledge base, for authenticated portal
- * parents (and admin users). Access control is enforced by the collection:
- * the query below runs with the requester's own permissions, so drafts and
- * disabled articles can never leak into results.
+ * Ranked keyword search over the knowledge base — reachable by anonymous
+ * visitors (public FAQ) and by signed-in portal parents. Access control is
+ * enforced by the collection itself (kbArticlesRead): the query below runs
+ * with the requester's own permissions, so drafts, disabled and portal-only
+ * articles can never leak to the wrong audience.
+ *
+ * Architecture (non-negotiable, see PROJECT_MEMORY.md §2.7): the assistant
+ * never invents information and never lets a plausible match stand in for a
+ * human on high-risk topics. Order of operations matters:
+ *   1. Rate limit (abuse/cost protection)
+ *   2. High-risk topic gate — checked BEFORE retrieval; a match short-
+ *      circuits straight to a fixed redirect, retrieval never runs
+ *   3. Retrieval — verbatim admin-authored answers only, never generated
+ *   4. Every question is logged (PII-scrubbed) with its outcome, for the
+ *      director's content-gap dashboard
  */
 export function makeKBSearchEndpoint(): Endpoint {
   return {
     path: '/search',
     method: 'get',
     handler: async (req: PayloadRequest) => {
-      if (!req.user) {
-        return Response.json({ error: 'Unauthorized' }, { status: 403 })
-      }
-
       const q = String(req.query?.q ?? '').slice(0, 300)
       const rawLocale = String(req.query?.locale ?? 'fr')
       const locale: Locale = isLocale(rawLocale) ? rawLocale : 'fr'
+      const isParent = req.user?.collection === 'parents'
+      const audience: 'public' | 'portal' = isParent ? 'portal' : 'public'
 
       if (!q.trim()) {
         return Response.json({ results: [] })
+      }
+
+      // Authenticated requests are rate-limited per parent (precise identity);
+      // anonymous requests fall back to IP, the only identity available.
+      const rateLimitKey = isParent ? `parent:${req.user!.id}` : `ip:${requesterIp(req)}`
+      if (isRateLimited(rateLimitKey, RATE_LIMIT_MAX, RATE_LIMIT_WINDOW_MS)) {
+        return Response.json(
+          { error: 'Trop de questions en peu de temps. Réessayez dans quelques minutes. / Too many questions in a short time. Try again in a few minutes.' },
+          { status: 429 },
+        )
+      }
+
+      const logQuestion = (outcome: 'answered' | 'refused' | 'gated', matchedArticles: number[] = []) =>
+        req.payload
+          .create({
+            collection: 'question-log',
+            data: {
+              question: scrubPii(q),
+              locale,
+              audience,
+              outcome,
+              matchedArticles,
+              askedBy: isParent ? (req.user!.id as number) : undefined,
+            },
+            overrideAccess: true,
+          })
+          .catch(() => {
+            // Logging must never break the assistant response.
+          })
+
+      const riskCategory = detectRiskCategory(q)
+      if (riskCategory) {
+        await logQuestion('gated')
+        return Response.json({ gated: true, message: GATED_MESSAGE[locale], results: [], events: [] })
       }
 
       const articles = await req.payload.find({
@@ -72,11 +125,14 @@ export function makeKBSearchEndpoint(): Endpoint {
         }
       })
 
+      await logQuestion(results.length > 0 ? 'answered' : 'refused', results.map((r) => r.id))
+
       // Integration with the news centre: when the question is about events
       // or outings, surface the requester's upcoming events alongside the
-      // articles. Same access rules as the portal — nothing extra leaks.
+      // articles. Announcements are never public, so this naturally returns
+      // nothing for anonymous visitors — same access rules as the portal.
       let events: { id: number; title: string; eventDate: string }[] = []
-      if (hasEventIntent(q)) {
+      if (isParent && hasEventIntent(q)) {
         const today = new Date().toISOString().slice(0, 10)
         const upcoming = await req.payload.find({
           collection: 'announcements',
@@ -103,7 +159,7 @@ export function makeKBSearchEndpoint(): Endpoint {
           }))
       }
 
-      return Response.json({ results, events })
+      return Response.json({ gated: false, results, events })
     },
   }
 }

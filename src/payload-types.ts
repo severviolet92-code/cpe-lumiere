@@ -84,6 +84,7 @@ export interface Config {
     'kb-categories': KbCategory;
     'kb-articles': KbArticle;
     'email-campaigns': EmailCampaign;
+    'question-log': QuestionLog;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -107,6 +108,7 @@ export interface Config {
     'kb-categories': KbCategoriesSelect<false> | KbCategoriesSelect<true>;
     'kb-articles': KbArticlesSelect<false> | KbArticlesSelect<true>;
     'email-campaigns': EmailCampaignsSelect<false> | EmailCampaignsSelect<true>;
+    'question-log': QuestionLogSelect<false> | QuestionLogSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -647,6 +649,10 @@ export interface KbArticle {
   image?: (number | null) | Media;
   category: number | KbCategory;
   /**
+   * Public: answers anonymous visitors on /faq and signed-in parents. Portal only: signed-in parents only.
+   */
+  audience: 'public' | 'portal';
+  /**
    * Synonyms and variants parents might type (e.g. “fee”, “price”, “payment”).
    */
   keywords?:
@@ -715,6 +721,23 @@ export interface EmailCampaign {
    */
   deliveryNote?: string | null;
   demoSeed?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Questions asked to the assistant, scrubbed of personal information. Filter by “Refused” to spot content gaps.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "question-log".
+ */
+export interface QuestionLog {
+  id: number;
+  question: string;
+  locale: 'fr' | 'en';
+  audience: 'public' | 'portal';
+  outcome: 'answered' | 'refused' | 'gated';
+  matchedArticles?: (number | KbArticle)[] | null;
+  askedBy?: (number | null) | Parent;
   updatedAt: string;
   createdAt: string;
 }
@@ -805,6 +828,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'email-campaigns';
         value: number | EmailCampaign;
+      } | null)
+    | ({
+        relationTo: 'question-log';
+        value: number | QuestionLog;
       } | null);
   globalSlug?: string | null;
   user:
@@ -1185,6 +1212,7 @@ export interface KbArticlesSelect<T extends boolean = true> {
   answer?: T;
   image?: T;
   category?: T;
+  audience?: T;
   keywords?:
     | T
     | {
@@ -1216,6 +1244,20 @@ export interface EmailCampaignsSelect<T extends boolean = true> {
   failedCount?: T;
   deliveryNote?: T;
   demoSeed?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "question-log_select".
+ */
+export interface QuestionLogSelect<T extends boolean = true> {
+  question?: T;
+  locale?: T;
+  audience?: T;
+  outcome?: T;
+  matchedArticles?: T;
+  askedBy?: T;
   updatedAt?: T;
   createdAt?: T;
 }

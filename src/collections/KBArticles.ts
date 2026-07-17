@@ -68,6 +68,24 @@ export const KBArticles: CollectionConfig = {
       label: { fr: 'Catégorie', en: 'Category' },
     },
     {
+      name: 'audience',
+      type: 'select',
+      required: true,
+      defaultValue: 'public',
+      label: { fr: 'Visibilité', en: 'Visibility' },
+      options: [
+        { label: { fr: 'Site public et portail', en: 'Public site and portal' }, value: 'public' },
+        { label: { fr: 'Portail parents seulement', en: 'Parent portal only' }, value: 'portal' },
+      ],
+      admin: {
+        position: 'sidebar',
+        description: {
+          fr: 'Public : répond aux visiteurs anonymes sur /faq et aux parents connectés. Portail seulement : réservé aux parents connectés.',
+          en: 'Public: answers anonymous visitors on /faq and signed-in parents. Portal only: signed-in parents only.',
+        },
+      },
+    },
+    {
       // Localized at the array level (see README architecture notes):
       // French keywords and English keywords are managed independently.
       name: 'keywords',

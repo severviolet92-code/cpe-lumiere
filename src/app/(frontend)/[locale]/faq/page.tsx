@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
+import { AssistantChat } from '../../../../components/assistant/AssistantChat'
 import { Reveal } from '../../../../components/Reveal'
 import { RichTextBlock } from '../../../../components/RichTextBlock'
 import { isLocale, localizedPath, type Locale } from '../../../../i18n/config'
@@ -46,6 +47,18 @@ export default async function FAQPage({ params }: { params: Promise<{ locale: st
     items: entries.docs.filter((e) => e.category === cat),
   })).filter((g) => g.items.length > 0)
 
+  // Public-audience knowledge base articles power the chat assistant above
+  // the static list; access control (kbArticlesRead) already restricts an
+  // anonymous request to published + enabled + audience:public articles.
+  const kbArticles = await payload.find({
+    collection: 'kb-articles',
+    depth: 0,
+    limit: 4,
+    locale,
+    overrideAccess: false,
+  })
+  const suggestions = kbArticles.docs.map((a) => a.question)
+
   return (
     <>
       <section className="section" style={{ paddingBottom: '2rem' }}>
@@ -60,6 +73,15 @@ export default async function FAQPage({ params }: { params: Promise<{ locale: st
               )}
             </h1>
             <p className="lede">{dict.faq.intro}</p>
+          </Reveal>
+        </div>
+      </section>
+
+      <section className="section" style={{ paddingTop: 0, paddingBottom: '1rem' }}>
+        <div className="container" style={{ maxWidth: '820px' }}>
+          <Reveal>
+            <p className="eyebrow eyebrow--ciel">{dict.portal.assistant.title}</p>
+            <AssistantChat locale={locale} suggestions={suggestions} />
           </Reveal>
         </div>
       </section>
