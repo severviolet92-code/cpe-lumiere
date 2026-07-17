@@ -8,6 +8,7 @@ import type { SerializedEditorState } from '@payloadcms/richtext-lexical/lexical
 import type { Locale } from '../../i18n/config'
 import { localizedPath } from '../../i18n/config'
 import { t } from '../../i18n/ui'
+import { formatDateWithWeekday } from '../../lib/format'
 import { RichTextBlock } from '../RichTextBlock'
 
 type KBResult = {
@@ -18,9 +19,11 @@ type KBResult = {
   image: { url: string; alt: string } | null
 }
 
+type KBEvent = { id: number; title: string; eventDate: string }
+
 type ChatEntry =
   | { key: number; role: 'user'; text: string }
-  | { key: number; role: 'assistant'; results: KBResult[] }
+  | { key: number; role: 'assistant'; results: KBResult[]; events: KBEvent[] }
   | { key: number; role: 'error' }
 
 /**
@@ -58,10 +61,10 @@ export function PortalAssistant({
         { credentials: 'include' },
       )
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const data = (await res.json()) as { results: KBResult[] }
+      const data = (await res.json()) as { results: KBResult[]; events?: KBEvent[] }
       setEntries((prev) => [
         ...prev,
-        { key: ++keyRef.current, role: 'assistant', results: data.results },
+        { key: ++keyRef.current, role: 'assistant', results: data.results, events: data.events || [] },
       ])
     } catch {
       setEntries((prev) => [...prev, { key: ++keyRef.current, role: 'error' }])
@@ -92,10 +95,32 @@ export function PortalAssistant({
               </div>
             )
           }
+          const eventsBlock = entry.events.length > 0 && (
+            <div className="assistant__events">
+              <p className="assistant__intro" style={{ marginTop: '0.9rem' }}>
+                {dict.portal.assistant.eventsIntro}
+              </p>
+              <ul>
+                {entry.events.map((event) => (
+                  <li key={event.id}>
+                    <span>🎉 {event.title}</span>
+                    <span className="assistant__event-date">
+                      {formatDateWithWeekday(locale, event.eventDate)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <Link href={localizedPath(locale, '/portail/annonces')}>
+                {dict.portal.assistant.eventsLink} →
+              </Link>
+            </div>
+          )
+
           if (entry.results.length === 0) {
             return (
               <div className="assistant__bubble assistant__bubble--bot" key={entry.key}>
                 <p style={{ margin: 0 }}>{dict.portal.assistant.fallback}</p>
+                {eventsBlock}
                 <p style={{ margin: '0.8rem 0 0' }}>
                   <Link className="btn btn--ghost" href={localizedPath(locale, '/contact')}>
                     {dict.portal.assistant.contactCta}
@@ -130,6 +155,7 @@ export function PortalAssistant({
                   )}
                 </article>
               ))}
+              {eventsBlock}
             </div>
           )
         })}

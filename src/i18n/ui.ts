@@ -175,6 +175,8 @@ export const ui = {
         browseEmpty: 'Le centre d’aide sera rempli sous peu.',
         error: 'Une erreur est survenue. Réessayez dans un instant.',
         inputLabel: 'Votre question',
+        eventsIntro: 'À l’agenda pour vos groupes :',
+        eventsLink: 'Voir toutes les annonces',
       },
     },
     footer: {
@@ -356,6 +358,8 @@ export const ui = {
         browseEmpty: 'The help centre will be filled shortly.',
         error: 'Something went wrong. Please try again in a moment.',
         inputLabel: 'Your question',
+        eventsIntro: 'Coming up for your groups:',
+        eventsLink: 'See all announcements',
       },
     },
     footer: {

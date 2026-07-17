@@ -1322,6 +1322,7 @@ async function run() {
         'Tous les détails se trouvent dans le portail parents.',
       ),
       audience: 'all',
+      status: 'draft',
       demoSeed: true,
     },
   })
@@ -1350,6 +1351,7 @@ async function run() {
         'Petit rappel : le grand pique-nique des familles a lieu ce samedi au parc. Apportez votre couverture — le CPE fournit collations et jeux !',
       ),
       audience: 'all',
+      status: 'scheduled',
       scheduledAt: new Date(Date.now() + 2 * 86400000).toISOString(),
       demoSeed: true,
     },

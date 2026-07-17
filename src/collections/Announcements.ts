@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
 import { announcementsRead, isAdminUser } from '../access'
+import { createCampaignFromAnnouncement } from '../endpoints/createCampaign'
 import { makeNotifyEndpoint } from '../endpoints/notify'
 import { demoSeedField } from '../fields/demoSeed'
 
@@ -35,7 +36,7 @@ export const Announcements: CollectionConfig = {
   },
   versions: { drafts: true },
   defaultSort: '-createdAt',
-  endpoints: [makeNotifyEndpoint('announcement')],
+  endpoints: [makeNotifyEndpoint('announcement'), createCampaignFromAnnouncement],
   fields: [
     {
       name: 'notifyAction',

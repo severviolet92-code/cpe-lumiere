@@ -45,7 +45,7 @@ const SYNONYM_GROUPS: string[][] = [
   ['horaire', 'horaires', 'heures', 'heure', 'ouverture', 'fermeture', 'schedule', 'hours', 'opening', 'closing', 'time'],
   ['fermeture', 'fermetures', 'ferie', 'feries', 'conge', 'conges', 'vacances', 'closure', 'closures', 'holiday', 'holidays', 'closed', 'vacation'],
   ['maladie', 'malade', 'fievre', 'sante', 'medicament', 'medicaments', 'sick', 'sickness', 'illness', 'ill', 'fever', 'health', 'medication', 'medicine'],
-  ['activite', 'activites', 'sortie', 'sorties', 'evenement', 'evenements', 'fete', 'fetes', 'activity', 'activities', 'outing', 'outings', 'event', 'events', 'party', 'trip'],
+  ['activite', 'activites', 'sortie', 'sorties', 'evenement', 'evenements', 'fete', 'fetes', 'calendrier', 'agenda', 'activity', 'activities', 'outing', 'outings', 'event', 'events', 'party', 'trip', 'calendar'],
   ['politique', 'politiques', 'reglement', 'reglements', 'regle', 'regles', 'policy', 'policies', 'rule', 'rules'],
   ['absence', 'absences', 'absent', 'retard', 'retards', 'late', 'lateness'],
   ['vetement', 'vetements', 'habits', 'habillement', 'clothing', 'clothes', 'dress'],
@@ -99,6 +99,11 @@ export type SearchableArticle = {
 }
 
 export type RankedResult = { id: number; score: number }
+
+/** Does the query talk about events/outings? Drives the assistant's event chips. */
+export function hasEventIntent(query: string): boolean {
+  return tokenize(query).some((token) => token.canon === 'activite')
+}
 
 /** True when a document token matches a query token (exact, or prefix for longer words). */
 function tokensMatch(docToken: string, queryToken: string): boolean {

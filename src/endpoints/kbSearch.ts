@@ -1,7 +1,7 @@
 import type { Endpoint, PayloadRequest } from 'payload'
 
 import { isLocale, type Locale } from '../i18n/config'
-import { lexicalPlainText, rankArticles, type SearchableArticle } from '../lib/kbSearch'
+import { hasEventIntent, lexicalPlainText, rankArticles, type SearchableArticle } from '../lib/kbSearch'
 
 const MAX_RESULTS = 3
 /** Results scoring far below the best match are noise, not alternatives. */
@@ -72,7 +72,38 @@ export function makeKBSearchEndpoint(): Endpoint {
         }
       })
 
-      return Response.json({ results })
+      // Integration with the news centre: when the question is about events
+      // or outings, surface the requester's upcoming events alongside the
+      // articles. Same access rules as the portal — nothing extra leaks.
+      let events: { id: number; title: string; eventDate: string }[] = []
+      if (hasEventIntent(q)) {
+        const today = new Date().toISOString().slice(0, 10)
+        const upcoming = await req.payload.find({
+          collection: 'announcements',
+          where: {
+            and: [
+              { kind: { equals: 'event' } },
+              { archived: { not_equals: true } },
+              { eventDate: { greater_than_equal: today } },
+            ],
+          },
+          sort: 'eventDate',
+          limit: 3,
+          depth: 0,
+          locale,
+          overrideAccess: false,
+          user: req.user,
+        })
+        events = upcoming.docs
+          .filter((doc) => doc.eventDate)
+          .map((doc) => ({
+            id: doc.id as number,
+            title: doc.title,
+            eventDate: doc.eventDate as string,
+          }))
+      }
+
+      return Response.json({ results, events })
     },
   }
 }
