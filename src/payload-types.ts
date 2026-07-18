@@ -561,6 +561,7 @@ export interface Parent {
    */
   groups: (number | Group)[];
   active?: boolean | null;
+  magicLinkExpiresAt?: string | null;
   demoSeed?: boolean | null;
   updatedAt: string;
   createdAt: string;
@@ -1156,6 +1157,7 @@ export interface ParentsSelect<T extends boolean = true> {
   language?: T;
   groups?: T;
   active?: T;
+  magicLinkExpiresAt?: T;
   demoSeed?: T;
   updatedAt?: T;
   createdAt?: T;

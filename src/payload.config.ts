@@ -25,11 +25,15 @@ import { KBArticles } from './collections/KBArticles'
 import { EmailCampaigns } from './collections/EmailCampaigns'
 import { QuestionLog } from './collections/QuestionLog'
 import { globals } from './globals'
+import { startCampaignScheduler } from './lib/campaignScheduler'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
 export default buildConfig({
+  onInit: async (payload) => {
+    startCampaignScheduler(payload)
+  },
   admin: {
     user: Users.slug,
     importMap: {
@@ -71,7 +75,13 @@ export default buildConfig({
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
   // Dev: local SQLite file. Production: swap to @payloadcms/db-postgres —
+  //   import { postgresAdapter } from '@payloadcms/db-postgres'
   //   db: postgresAdapter({ pool: { connectionString: process.env.DATABASE_URI } })
+  // Verified end-to-end against a local Postgres 16 instance: schema push,
+  // full seed, auth (admin/parent/magic-link), KB search, access control,
+  // campaign send, and a clean production build all work unchanged — see
+  // PROJECT_MEMORY.md §3/§8. @payloadcms/db-postgres is already an installed
+  // dependency, so this really is a one-line swap at deploy time.
   db: sqliteAdapter({
     client: {
       url: process.env.DATABASE_URI || 'file:./cpe-lumiere.db',

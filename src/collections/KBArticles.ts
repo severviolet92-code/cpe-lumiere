@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
 import { isAdminUser, kbArticlesRead } from '../access'
+import { kbArticlePreviewEndpoint } from '../endpoints/kbPreview'
 import { makeKBSearchEndpoint } from '../endpoints/kbSearch'
 import { demoSeedField } from '../fields/demoSeed'
 
@@ -32,8 +33,16 @@ export const KBArticles: CollectionConfig = {
     delete: isAdminUser,
   },
   versions: { drafts: true },
-  endpoints: [makeKBSearchEndpoint()],
+  endpoints: [makeKBSearchEndpoint(), kbArticlePreviewEndpoint],
   fields: [
+    {
+      name: 'previewAction',
+      type: 'ui',
+      admin: {
+        position: 'sidebar',
+        components: { Field: '/components/admin/KBPreviewButton#KBPreviewButton' },
+      },
+    },
     {
       name: 'question',
       type: 'text',
