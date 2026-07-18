@@ -907,6 +907,33 @@ summary:focus-visible {
   color: var(--terracotta-deep);
 }
 
+.tab-switch {
+  display: inline-flex;
+  gap: 0.3rem;
+  background: var(--paper-warm);
+  border-radius: var(--radius-pill);
+  padding: 0.3rem;
+  margin: 0 auto 1.6rem;
+}
+
+.tab-switch__btn {
+  border: none;
+  background: transparent;
+  padding: 0.5rem 1.1rem;
+  border-radius: var(--radius-pill);
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.tab-switch__btn--active {
+  background: var(--honey);
+  color: var(--ink);
+}
+
 /* ---------- Rich text ---------- */
 
 .rich-text {

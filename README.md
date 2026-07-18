@@ -8,7 +8,7 @@ Bilingual (FR-first) public website + admin CMS for a Québec CPE (childcare cen
 
 - **Next.js (App Router)** — public site, FR at `/`, EN at `/en`
 - **Payload CMS** — embedded admin at `/admin`, FR-first field localization, roles (director / staff / developer), draft → publish workflow
-- **SQLite** in development (`DATABASE_URI=file:./cpe-lumiere.db`) — swap to **Postgres** in production via `@payloadcms/db-postgres` (one adapter change in `src/payload.config.ts`)
+- **SQLite** in development (`DATABASE_URI=file:./cpe-lumiere.db`) — swap to **Postgres** in production via `@payloadcms/db-postgres` (already an installed dependency; one adapter change in `src/payload.config.ts` — verified end-to-end against a real Postgres 16 instance: schema push, seed, auth, access control, campaign send, and a production build all pass unchanged)
 - **Resend** (optional) for the contact form; without an API key, messages are logged server-side only
 
 ## Getting started
@@ -38,6 +38,9 @@ npm run dev                # http://localhost:3000  ·  admin: /admin
 - **Email campaigns** (`email-campaigns`): draft → preview (exact branded HTML) → test-to-self → confirmed send, to all parents or selected groups, each parent in their own language. Optional `scheduledAt`; scheduled sends go out when `POST /api/email-campaigns/run-due` runs (admin session or `Authorization: Bearer $CAMPAIGN_CRON_SECRET` — point an external cron at it, e.g. every 5 minutes). Delivery counters + failed addresses on the campaign; every send is written to the read-only notification log.
 - **Mailer abstraction** (`src/lib/mailer.ts`): Resend HTTP API when `RESEND_API_KEY` is set, otherwise Payload's email adapter (console transport in demo). Swapping to SMTP/SendGrid is a config/adapter change — no caller changes.
 - **Integrations**: a published announcement becomes a prefilled draft campaign in one click (admin sidebar); the assistant surfaces upcoming events (news-centre data, same access rules) when a question mentions outings/events.
+- **Safety (assistant)**: a high-risk topic gate (`src/lib/riskGate.ts` — medication, injury, legal/custody, complaints, pickup authorization, abuse, emergency) runs *before* retrieval and always redirects to a human, regardless of whether an article might otherwise match. Every question is logged to `question-log` (PII-scrubbed) with its outcome — the director's content-gap dashboard. The assistant is rate limited (10/5min) and lives on both the public `/faq` page and the portal `/portail/aide`, with a preview action in the admin (drafts included) so answers can be checked before publishing.
+- **Campaign scheduling actually runs**: an in-process scheduler (`src/lib/campaignScheduler.ts`) checks for due campaigns every few minutes while the app is running — no external cron required for a single-instance deployment. Set `CAMPAIGN_SCHEDULER=external` once running more than one instance, and point a real cron at `run-due` instead (see below).
+- **Magic-link parent sign-in** (`/portail`, "Lien magique" tab): the production-intended passwordless mode, alongside the original demo password login. Single-use, 15-minute link; see `src/endpoints/magicLink.ts` for the design (the one-time token is the parent's password field for the window, consumed via the existing login endpoint, rotated immediately after use).
 
 ## Architecture notes
 
@@ -55,5 +58,5 @@ npm run dev                # http://localhost:3000  ·  admin: /admin
 3. Configure Resend (`RESEND_API_KEY`, `CONTACT_EMAIL_TO`, `CONTACT_EMAIL_FROM`) with SPF/DKIM/DMARC on the CPE's domain.
 4. `npm run seed:clear`, create the director's real admin account, delete demo accounts.
 5. Set `NEXT_PUBLIC_SERVER_URL` to the public domain (used by robots.txt/sitemap and email links).
-6. Review the privacy policy and Law 25 obligations before enabling any parent-facing feature (Phase 2).
-7. Set `CAMPAIGN_CRON_SECRET` and point a scheduler (cron, GitHub Action, hosting platform cron) at `POST /api/email-campaigns/run-due` so scheduled campaigns actually send.
+6. Complete and get sign-off on `LAW25_PIA_TEMPLATE.md` (a draft/starting point, not a finished assessment) before enabling any parent-facing feature with real data.
+7. Once running more than one instance, set `CAMPAIGN_SCHEDULER=external` and point a real scheduler (cron, GitHub Action, hosting platform cron) with `Authorization: Bearer $CAMPAIGN_CRON_SECRET` at `POST /api/email-campaigns/run-due` — a single instance already schedules campaigns on its own (see Communication suite above).
