@@ -2,7 +2,7 @@
 
 > Single source of truth for continuing this project in a new AI conversation. A new assistant should be able to read this file alone and keep working correctly, without the prior chat history.
 >
-> Last updated: 2026-07-18, after Phase 3F (closing the remaining gaps against the original feature spec: KB preview, a working campaign scheduler, magic-link auth, a verified — not just claimed — Postgres swap, and a Law 25 PIA template). This document is the **architectural source of truth**, carried forward from the original planning sessions. Where the implementation has evolved beyond what was originally sketched, that evolution is documented explicitly *in place* — old plan and new reality side by side — rather than silently overwritten. Nothing in §2 (non-negotiable rules) has been weakened; where implementation details under a rule changed, the rule's *intent* was preserved and the *mechanism* was updated to match what actually ships.
+> Last updated: 2026-07-18, after Phase 3G (rehearsing `seed:clear` for real for the first time — previously only inspected, never run — confirming the demo director account, all globals, and every public page survive an emptied database cleanly). Builds on Phase 3F (KB preview, a working campaign scheduler, magic-link auth, a verified — not just claimed — Postgres swap, and a Law 25 PIA template). This document is the **architectural source of truth**, carried forward from the original planning sessions. Where the implementation has evolved beyond what was originally sketched, that evolution is documented explicitly *in place* — old plan and new reality side by side — rather than silently overwritten. Nothing in §2 (non-negotiable rules) has been weakened; where implementation details under a rule changed, the rule's *intent* was preserved and the *mechanism* was updated to match what actually ships.
 >
 > **Deployment status: NOT deployed, and not to be deployed until every planned feature, screen, and workflow is implemented and verified, and the user has explicitly reviewed and approved going live** (explicit instruction, 2026-07-18). Phase 3 is now code-complete against both this document and the original detailed feature brief (help centre + news centre + email campaigns, including the items that were initially missed — see §5 Phase 3F). Phase 4 (real hosting, Postgres, domain, Resend domain auth, Law 25 sign-off, real accounts) remains genuinely not started — §8 has the exact list.
 
@@ -95,7 +95,7 @@ Build a **bilingual (French-first) website + communication platform** for a real
 
 **Globals** (one per public page template — the director edits words here, never layout): `site-settings`, `home-page`, `about-page`, `life-page`, `admission-page`, `careers-page`.
 
-**Demo-data hygiene:** every seeded document carries a hidden `demoSeed: true` field. `npm run seed:clear` deletes every document with that flag across all collections, **including the Phase 3 additions** (`kb-articles`, `kb-categories`, `email-campaigns` are all in the `COLLECTIONS` list in `src/seed/clear.ts`).
+**Demo-data hygiene:** every seeded document carries a hidden `demoSeed: true` field. `npm run seed:clear` deletes every document with that flag across all collections, **including the Phase 3 additions** (`kb-articles`, `kb-categories`, `email-campaigns` are all in the `COLLECTIONS` list in `src/seed/clear.ts`). **Actually run and verified (Phase 3G)**, not just inspected: ran cleanly with zero errors across all 14 flagged collections in the correct relational order (e.g. `kb-articles` before `kb-categories`); the demo director account and all six globals (site content) correctly survive (`seed:clear` never touches `users` or globals); every public page — home, activities, admission, FAQ, careers, etc. — was confirmed via screenshot to render a sensible empty state with zero JS errors, not a crash, when every content collection is empty. `question-log` is deliberately outside `seed:clear`'s scope (it's real usage/audit data, not demo content, and has no `demoSeed` field) — a director can still purge it manually via the admin UI if desired before handoff.
 
 ### Access control (the security-critical file)
 All access logic is centralized in **`src/access/index.ts`**. Original exports, unchanged:
@@ -333,6 +333,16 @@ Run via `curl` with separate cookie jars per persona, plus a headless-browser pa
 | Magic-link request rate limit | 3 allowed, 4th `429` | ✅ Pass |
 | Full magic-link flow through the real browser UI | Request → emailed link → click → authenticated `/portail` dashboard | ✅ Pass |
 | Postgres adapter swap: schema push, seed, auth, KB search, access control, campaign send, production build | All identical to SQLite | ✅ Pass |
+
+**Phase 3G — `seed:clear` rehearsal (this session):**
+
+| Test | Expected result | Status |
+|---|---|---|
+| `npm run seed:clear` against a fully seeded database | Zero errors, all 14 `demoSeed`-flagged collections cleared in correct relational order | ✅ Pass |
+| Demo director account after clear | Still exists, still logs in (`users` is outside `seed:clear`'s scope) | ✅ Pass |
+| `site-settings` global (CPE name, etc.) after clear | Unchanged (globals are outside `seed:clear`'s scope) | ✅ Pass |
+| Every public page with all content collections empty | `200`, no JS errors, real screenshot-confirmed graceful empty states (e.g. "Aucune activité publique à l'horaire pour l'instant") — not a crash or blank page | ✅ Pass |
+| `question-log` after clear | Untouched (has no `demoSeed` field; it's real audit data, not demo content) | ✅ Pass (by design) |
 
 ---
 
