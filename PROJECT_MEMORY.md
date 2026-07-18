@@ -2,7 +2,9 @@
 
 > Single source of truth for continuing this project in a new AI conversation. A new assistant should be able to read this file alone and keep working correctly, without the prior chat history.
 >
-> Last updated: 2026-07-17, after Phase 3 reconciliation. This document is the **architectural source of truth**, carried forward from the original planning sessions. Where the implementation has evolved beyond what was originally sketched, that evolution is documented explicitly *in place* — old plan and new reality side by side — rather than silently overwritten. Nothing in §2 (non-negotiable rules) has been weakened; where implementation details under a rule changed, the rule's *intent* was preserved and the *mechanism* was updated to match what actually ships.
+> Last updated: 2026-07-18, after Phase 3F (closing the remaining gaps against the original feature spec: KB preview, a working campaign scheduler, magic-link auth, a verified — not just claimed — Postgres swap, and a Law 25 PIA template). This document is the **architectural source of truth**, carried forward from the original planning sessions. Where the implementation has evolved beyond what was originally sketched, that evolution is documented explicitly *in place* — old plan and new reality side by side — rather than silently overwritten. Nothing in §2 (non-negotiable rules) has been weakened; where implementation details under a rule changed, the rule's *intent* was preserved and the *mechanism* was updated to match what actually ships.
+>
+> **Deployment status: NOT deployed, and not to be deployed until every planned feature, screen, and workflow is implemented and verified, and the user has explicitly reviewed and approved going live** (explicit instruction, 2026-07-18). Phase 3 is now code-complete against both this document and the original detailed feature brief (help centre + news centre + email campaigns, including the items that were initially missed — see §5 Phase 3F). Phase 4 (real hosting, Postgres, domain, Resend domain auth, Law 25 sign-off, real accounts) remains genuinely not started — §8 has the exact list.
 
 ---
 
@@ -61,7 +63,7 @@ Build a **bilingual (French-first) website + communication platform** for a real
 
 **Collections carried from the original plan, unchanged:**
 - `users` — admin/staff accounts. `role`: `director` | `staff` | `developer`. Auth-enabled.
-- `parents` — portal accounts. Invite-only (admin creates them), 8h sessions, `groups` relationship, `active` flag, `language` preference. **Separate from `users`** — always distinguish via `req.user?.collection === 'users'` vs `'parents'` in access functions.
+- `parents` — portal accounts. Invite-only (admin creates them), 8h sessions, `groups` relationship, `active` flag, `language` preference. **Separate from `users`** — always distinguish via `req.user?.collection === 'users'` vs `'parents'` in access functions. **Phase 3F**: gained `magicLinkExpiresAt` (hidden, system-managed) plus `beforeLogin`/`afterLogin` hooks — see "Parent authentication: password + magic link" below. Password login (the original demo mode) is untouched for any account that has never requested a magic link.
 - `media` — general image uploads.
 - `groups` — the CPE's age groups. Publicly readable (names/age-ranges are normal public info).
 - `activities` — title, `visibility` (`portal`|`public`, default `portal`), `image`, `groups`, `date`, `endDate`, `description` (richText), `importantNote`, `checklist` (array, localized at array level), draft/publish, notify endpoint.
@@ -83,6 +85,7 @@ Build a **bilingual (French-first) website + communication platform** for a real
 - `kb-categories` — `name` (localized), `icon` (emoji), `order`. Readable by any authenticated account (admin or parent); the public help-centre page reads the categories of articles it's allowed to see rather than the category list directly.
 - `kb-articles` — `question` (localized), `answer` (richText, localized), `image` (optional upload), `category` (relationship), `keywords` (array, **localized at the array level**, one array per locale — the admin enters synonyms parents might type, e.g. "tarif" / "prix" / "paiement"), `enabled` (checkbox, sidebar), `audience` (`public` | `portal`, **added during reconciliation** to satisfy rule 7's requirement that the assistant work on both the public site and the portal), draft/publish.
 - Access (`kbArticlesRead` in `src/access/index.ts`) is **three-tier**: admin sees everything; a signed-in parent sees every published + enabled article regardless of audience; the anonymous public sees only published + enabled + `audience: 'public'` articles. `kbCategoriesRead` is simpler: any authenticated account (admin or parent) can read categories; anonymous requests never touch the categories collection directly.
+- **Preview (Phase 3F)**: `GET /api/kb-articles/:id/preview?locale=` (admin-only, `src/endpoints/kbPreview.ts`) renders the article exactly as parents will see it — question, category chip, rich answer, image — **including drafts** (reads with `draft: true`), with a status/visibility badge row. Sidebar button in the admin (`src/components/admin/KBPreviewButton.tsx`). This satisfies the original brief's "preview answers before publishing," which the interim Phase 3A build only met implicitly via draft visibility.
 
 **`question-log` — built as originally planned, pointed at the new collection.** Every question asked to the assistant is logged: `question` (PII-scrubbed via `src/lib/piiScrub.ts` — strips emails and phone numbers before storage), `locale`, `audience` (`public`|`portal`, from the request context, never client-supplied), `outcome` (`answered`|`refused`|`gated`), `matchedArticles` (relationship to `kb-articles`, hasMany — renamed from the original plan's `matchedFaq` since the source collection changed), `askedBy` (relationship to `parents`, optional — null for anonymous questions). System-write-only (`create: () => false`; the search endpoint writes via `overrideAccess: true`). This is the director's "what are parents actually asking that we haven't answered" dashboard — filter by `outcome: refused` to find real content gaps.
 
@@ -114,7 +117,7 @@ All access logic is centralized in **`src/access/index.ts`**. Original exports, 
 **Phase 3C adds a parallel, richer path** (`src/endpoints/campaigns.ts`, collection `email-campaigns`):
 - `GET /:id/preview?locale=` — returns the *exact* branded HTML the parent will receive (own endpoint, admin-only), rendered via `src/emails/branded.ts` (email-safe inline-styled table layout matching the site's honey/paper design tokens) from the campaign's Lexical body via `convertLexicalToHTML`.
 - `POST /:id/send` — `{}` previews recipients; `{ test: true }` sends only to the requesting admin (subject prefixed `[TEST]`); `{ confirm: true }` sends to every resolved recipient, **in their own language** (`parent.language`), updates delivery counters, and writes to `notification-log`. A campaign already `sent`/`sending` refuses to resend.
-- `POST /run-due` — sends every campaign whose `scheduledAt` has passed; callable by an admin session or by an external cron via `Authorization: Bearer $CAMPAIGN_CRON_SECRET`. Claims each campaign (`status: 'sending'`) before sending so a concurrent runner can't double-send. **Nothing wires this to an actual scheduler yet** — see §8.
+- `POST /run-due` — sends every campaign whose `scheduledAt` has passed; callable by an admin session or by an external cron via `Authorization: Bearer $CAMPAIGN_CRON_SECRET`. Claims each campaign (`status: 'sending'`) before sending so a concurrent runner can't double-send. **Phase 3F: this is now actually wired up** — `src/lib/campaignScheduler.ts`, started from `onInit` in `payload.config.ts`, calls it on an in-process interval (default 5 min, `CAMPAIGN_SCHEDULER_INTERVAL_MINUTES`) for as long as the app process is running. Guarded against double-starting (module-level flag) and against overlapping runs (the `sending` claim above). Set `CAMPAIGN_SCHEDULER=external` to disable it once running more than one instance — at that point rely solely on an external cron hitting this endpoint, since nothing here coordinates across processes. Verified live: a backdated campaign was sent with no manual trigger, purely by the interval firing.
 - `POST /api/announcements/:id/create-campaign` — one click from a published announcement to a prefilled draft campaign (both locales, audience mapped from the announcement's scope). Creates a **draft only**; still requires the normal preview → confirm to actually send.
 
 Admin UI: `src/components/admin/NotifyButton.tsx` (now also offers "create campaign" on Announcements) and `src/components/admin/CampaignActions.tsx` (preview / send test to me / send now), both wired into their collection sidebars via `admin.components.Field` + the Payload import map.
@@ -131,6 +134,52 @@ Admin UI: `src/components/admin/NotifyButton.tsx` (now also offers "create campa
 7. **Events integration (new, Phase 3D):** when a signed-in parent's question has event/outing intent (`hasEventIntent()` in `kbSearch.ts`), the endpoint also returns up to 3 upcoming `kind: 'event'` announcements the parent is allowed to see (same `overrideAccess: false` + session pattern) — surfaced as a small "coming up" list under the chat answer with a link to the full announcements page. Anonymous requests never trigger this (announcements are never public), so it degrades safely to "no events" rather than erroring.
 
 Frontend: **`src/components/assistant/AssistantChat.tsx`** (moved/renamed during reconciliation from the interim `components/portal/PortalAssistant.tsx` to match the originally-planned name and location) — one component, one endpoint, embedded on **both** the public `/faq` page (above the existing static category accordion) and `/portail/aide` in the parent portal, exactly as originally planned: "the endpoint itself detects the parent session and widens retrieval accordingly, so no client-side trust is involved." Renders four distinct bot states: normal answer card(s), empty-result fallback (with a "write to the CPE" CTA), a visually distinct gated warning (terracotta, ⚠️), and a rate-limited notice.
+
+### Parent authentication: password + magic link (Phase 3F)
+Both `Parents.ts` and this document originally flagged magic-link sign-in as
+"production switches to" — i.e. planned but unbuilt. It is now built,
+**alongside** the original demo password login (not instead of it — the
+documented demo credentials still work for any parent who has never
+requested a link).
+
+Design (`src/endpoints/magicLink.ts`): rather than a separate token table,
+the freshly generated one-time token **becomes the parent's `password`
+field** for a 15-minute window (`magicLinkExpiresAt`) — Payload bcrypt-hashes
+it exactly like any password. Consuming the link is then just a normal call
+to the existing, already-tested `POST /api/parents/login` REST endpoint with
+the token as the password — no bespoke JWT or cookie code. Two collection
+hooks on `Parents` do the rest:
+- `beforeLogin` — throws a proper `APIError(…, 401, null, true)` (surfaces
+  cleanly to the client, not a generic 500) if `magicLinkExpiresAt` is set
+  and in the past. No-ops for ordinary password logins (`magicLinkExpiresAt`
+  is null unless a link was requested).
+- `afterLogin` — if `magicLinkExpiresAt` was set, immediately rotates the
+  password to a fresh random value and clears the expiry, so the emailed
+  link is genuinely single-use (a replay attempt gets the normal "incorrect
+  email or password" error).
+
+`POST /api/parents/magic-link/request` (`{ email, locale }`) always responds
+`{ ok: true }` regardless of whether the email matches an account —
+enumeration-safe by design — and is itself rate-limited (3/10min/IP,
+separate from the search endpoint's limiter). It emails the branded link via
+the same `sendOne()`/`renderBrandedEmail()` machinery the campaign system
+uses. Frontend: `PortalLogin.tsx` gained a password/magic-link tab switch;
+`/portail/verifier` (`MagicLinkVerify.tsx`) reads `?email=&token=` from the
+URL and posts them straight to the normal login endpoint.
+
+**Accepted trade-off, documented rather than hidden**: requesting a magic
+link overwrites whatever password was previously set, including the fixed
+demo password (`Parent-Demo-2026!`) — that account then only signs in via a
+fresh magic link (or a password reset) until an admin sets a new password.
+This is expected behaviour for a real magic-link-first account, not a bug;
+it's called out here so a future session doesn't "fix" it by accident.
+
+Verified end-to-end through the real browser UI: request → emailed link
+(captured via a temporary debug log, since there is no real inbox in this
+environment, removed before commit) → click → lands authenticated on
+`/portail`. Also verified: expired-link rejection (proper 401, clean
+message), single-use rotation (replay fails), and that an untouched
+account's password login is completely unaffected.
 
 ### Hero visual system (3-tier) — unchanged, confirmed present
 - **Tier 0** (everyone, instant): layered static SVG "diorama" (`src/components/HeroScene.tsx`) — the page's LCP element.
@@ -152,7 +201,7 @@ Warm paper background (`#faf5ec`), ink-brown text, one signature honey/amber hue
 
 - **Common commands** (environment-independent):
   - `npm run dev` — start dev server
-  - `npm run build` — production build (`next build`; confirmed working, full clean build verified this session — 31 routes, TypeScript pass, static generation all succeeded)
+  - `npm run build` — production build (`next build`; confirmed working repeatedly this session, most recently 33 routes after Phase 3F, TypeScript pass, static generation all succeeded — also verified against a real Postgres instance, see below)
   - `npm run generate:types` — regenerate `src/payload-types.ts` after any collection/global schema change
   - `npm run generate:importmap` — regenerate the admin panel's custom-component import map (needed after adding/changing admin UI components)
   - `npm run seed` — idempotent fictional demo content (refuses if demo data already exists)
@@ -160,9 +209,10 @@ Warm paper background (`#faf5ec`), ink-brown text, one signature honey/amber hue
   - `npx tsc --noEmit` — typecheck
   - `npm run lint` — ESLint
 - **Resetting the dev database after a schema change:** stop the dev server → delete `cpe-lumiere.db` (and, if uploads changed shape, `media/`/`documents/`/`gallery-photos/`) → `npm run seed`. **Gotcha confirmed this session:** if the dev server is still holding the old SQLite file open when you delete it, Payload's schema-push fails with `SQLITE_READONLY_DBMOVED` — always stop the server *first*, confirm it's actually dead, then delete, then restart.
-- **GitHub repo:** `https://github.com/severviolet92-code/cpe-lumiere`. Default branch `main`, currently at Phase 2 (`6ca18d3`) — Phase 3 work happened on branch **`claude/cpe-lumiere-continue-0otouy`** and has not been merged to `main` yet (merging was explicitly deferred by the user pending review — see §8).
-- `.env` and `*.db` are not tracked in git. `documents/`, `gallery-photos/`, `media/` seed-output directories **are** tracked (the original committed demo assets), but **re-running `npm run seed` against an already-seeded-once checkout produces suffixed duplicates** (`-1.pdf`, `-2.png`, etc.) that are regenerable and should be deleted before committing, not tracked.
-- **Commit history (oldest → newest):** `da5d4f7` initial backup → `63177fd` stop tracking local db → `7752ba3` Phase 1 polish → `aa630df` Phase 1A+1B → `501f9d2` Phase 1C → `6ca18d3` Phase 2 → *(branch `claude/cpe-lumiere-continue-0otouy` from here)* → `c29f743` Phase 3A (KB + assistant) → `b457d28` untrack duplicate seed uploads → `23b3ecb` Phase 3B (news centre) → `9c5cd84` Phase 3C (email campaigns) → `9efbb7f` Phase 3D (integrations + docs) → `968a1dc` this memory file, first pass → *(pending: the reconciliation commit that will follow this rewrite)*.
+- **GitHub repo:** `https://github.com/severviolet92-code/cpe-lumiere`. Default branch `main` — **merged and pushed** (commit `9cd00f0`, per explicit user approval). Ongoing work continues on branch **`claude/cpe-lumiere-continue-0otouy`**, merged into `main` again after each stable milestone. **The application has not been deployed anywhere publicly** — merging to `main` is a repo-hygiene step, not a deployment; see §8 for what deployment actually still requires.
+- `.env` and `*.db` are not tracked in git. `documents/`, `gallery-photos/`, `media/` seed-output directories **are** tracked (the original committed demo assets), but **re-running `npm run seed` against an already-seeded-once checkout produces suffixed duplicates** (`-1.pdf`, `-2.png`, etc.) that are regenerable and should be deleted before committing, not tracked. Only the un-suffixed and `-1` files are actually tracked in `git ls-tree` — anything `-2` or higher is always this session's regenerable output.
+- **Commit history (oldest → newest):** `da5d4f7` initial backup → `63177fd` stop tracking local db → `7752ba3` Phase 1 polish → `aa630df` Phase 1A+1B → `501f9d2` Phase 1C → `6ca18d3` Phase 2 → *(branch `claude/cpe-lumiere-continue-0otouy` from here)* → `c29f743` Phase 3A (KB + assistant) → `b457d28` untrack duplicate seed uploads → `23b3ecb` Phase 3B (news centre) → `9c5cd84` Phase 3C (email campaigns) → `9efbb7f` Phase 3D (integrations + docs) → `968a1dc` memory file, first pass → `6456b62` Phase 3E (reconciliation) → **`9cd00f0` merged into `main`** → `3031c04` Phase 3F (KB preview, working scheduler, magic-link, verified Postgres swap) → *(pending: this memory update + `LAW25_PIA_TEMPLATE.md`, then re-merge to `main`)*.
+- **Postgres verified, not just documented (Phase 3F):** `@payloadcms/db-postgres` is now an installed dependency. Tested against a local Postgres 16 instance (`service postgresql start`, a scratch `cpe_test`/`cpe_lumiere_test` role+db): schema push succeeded, full seed succeeded, admin/parent/magic-link auth all worked, KB search + access control + campaign send all worked, and a production build succeeded — all unchanged from SQLite. The active adapter in the committed `payload.config.ts` is still `sqliteAdapter` (correct for this demo); switching is a genuine one-line change now, not an untested claim. The scratch Postgres role/db were dropped after testing — nothing persists from this test.
 - **Demo accounts** (all fictional, printed to console by `npm run seed`):
   - Admin/director: `direction@voielactee-demo.example` / `Lumiere-Demo-2026!`
   - Parent A (group: Les Papillons): `famille.tremblay@voielactee-demo.example` / `Parent-Demo-2026!`
@@ -203,13 +253,22 @@ Warm paper background (`#faf5ec`), ink-brown text, one signature honey/amber hue
 - Plus the originally-planned **public placement**: `kb-articles` gained an `audience` field, `kbArticlesRead` gained a public tier, and the assistant (renamed `AssistantChat`, matching the original plan's component name) now lives on both `/faq` and `/portail/aide`.
 - All of Phase 3A–E has been re-verified together as one coherent test pass (§7) and a full production build (`npm run build`) succeeds cleanly with all 31 routes.
 
+**Merge to `main`.** After Phase 3E, the user explicitly approved merging `claude/cpe-lumiere-continue-0otouy` into `main` (clean fast merge, no conflicts, `9cd00f0`). A production-mode build-and-run verification pass followed (build, seed, `next start`, full test matrix, headless-browser sweep of every page including admin) — zero issues found. **Deployment itself was explicitly deferred** — the user chose "verify production build only," not a real public launch, and separately clarified the project should not be deployed until every planned feature is implemented.
+
+**Phase 3F — Closing the remaining gaps against the original detailed feature brief (this session, after the merge).** Re-auditing the *original* three-system feature request (Smart Parent Assistant / Announcements & News Center / Automatic Email Notification System) against the shipped code — not just against this document — surfaced four real gaps beyond what Phase 3E had already fixed:
+- **KB article preview** (admin) — the brief said "preview answers before publishing"; the collection only had implicit draft visibility. Added a real preview endpoint + admin sidebar button, working on drafts.
+- **Campaign scheduling didn't actually fire** — `run-due` existed but nothing called it periodically, so "schedule an email" required a human to remember to trigger it. Added an in-process scheduler; verified it sends a backdated campaign with zero manual intervention.
+- **Magic-link parent sign-in was never built** — flagged in `Parents.ts`'s own comment and in this document as "production switches to," but only password login existed. Built it, verified the complete flow through the real browser UI.
+- **The Postgres adapter swap was an untested claim** — verified it end-to-end against a real local Postgres 16 instance, then reverted to the SQLite default.
+- Also produced `LAW25_PIA_TEMPLATE.md` — a structured **draft**, explicitly not a completed assessment, to give the director/legal counsel a real starting point for the Phase 4 gate in rule 11.
+
 ---
 
 ## 6. Current state
 
-**Status: Phase 3 (A through E) is code-complete, fully tested, and about to be committed as the reconciliation commit.** Nothing is mid-flight. The next real decision point is Phase 4 (see §8) — explicitly not started, requires the user's/director's approval.
+**Status: Phase 3 (A through F) is code-complete and fully tested, merged into `main`. The application is NOT deployed anywhere, and per explicit user instruction (2026-07-18) must not be until every planned feature, screen, and workflow is implemented and verified, and the user has explicitly reviewed and approved going live.** Nothing is mid-flight. Phase 4 (see §8) remains genuinely not started — it requires real-world inputs (hosting account, domain, Postgres connection, Resend domain, legal sign-off) that only the user/director can provide, not further coding.
 
-The assistant now satisfies §2 rule 7 in full: knowledge-base-only answers, no generation, hard-gated high-risk topics checked before retrieval, every question logged and PII-scrubbed, rate-limited, and available in both the originally-planned public and portal contexts.
+The assistant satisfies §2 rule 7 in full: knowledge-base-only answers, no generation, hard-gated high-risk topics checked before retrieval, every question logged and PII-scrubbed, rate-limited, and available in both the public and portal contexts. The communication suite (help centre, news centre, email campaigns) now matches the original detailed feature brief item-for-item, including the administrative capabilities (preview, scheduling that actually runs) that were initially missed. Parent authentication offers both the original demo password mode and the originally-planned magic-link mode, verified working side by side.
 
 ---
 
@@ -256,15 +315,68 @@ Run via `curl` with separate cookie jars per persona, plus a headless-browser pa
 | Unauthenticated `run-due` (no session, no cron secret) | `403` | ✅ Pass |
 | Full production build (`npm run build`) | Succeeds, 31 routes, no type errors | ✅ Pass |
 
+**Post-merge production-mode pass (build + `next start`, no public hosting):** every public/portal/admin route sweep, access control, KB search + gate, campaign send, and a full headless-browser sweep (every page, portal login, admin panel) — zero JS/console errors, zero issues found. ✅ Pass
+
+**Phase 3F rows — all verified live this session:**
+
+| Test | Expected result | Status |
+|---|---|---|
+| KB preview endpoint, admin session, draft article | `200`, rendered bubble with status/visibility badges | ✅ Pass |
+| KB preview endpoint, unauthenticated | `403` | ✅ Pass |
+| Campaign scheduler: backdated `scheduledAt`, no manual `run-due` call | Sent automatically within one interval tick, `notification-log` entry created | ✅ Pass |
+| Magic-link request, existing active parent | `{ok:true}`, exactly one email-send attempt logged, `magicLinkExpiresAt` set ~15min out | ✅ Pass |
+| Magic-link request, non-existent email | Identical `{ok:true}` response, **zero** email-send attempt (enumeration-safe) | ✅ Pass |
+| Consume valid magic-link token via `/api/parents/login` | `200`, real session, portal reachable | ✅ Pass |
+| Replay the same (now-consumed) token | `401` incorrect-credentials error (rotation confirmed) | ✅ Pass |
+| Consume an expired token (matches password, but `magicLinkExpiresAt` past) | Clean `401` with expiry message (not a generic 500) | ✅ Pass |
+| Ordinary password login for an untouched parent account | Unaffected, `200` | ✅ Pass |
+| Magic-link request rate limit | 3 allowed, 4th `429` | ✅ Pass |
+| Full magic-link flow through the real browser UI | Request → emailed link → click → authenticated `/portail` dashboard | ✅ Pass |
+| Postgres adapter swap: schema push, seed, auth, KB search, access control, campaign send, production build | All identical to SQLite | ✅ Pass |
+
 ---
 
 ## 8. Immediate next steps (in order)
 
-1. **Commit the reconciliation** (this document + the risk gate / question log / rate limiter / public-placement code) as its own milestone on `claude/cpe-lumiere-continue-0otouy`, with a commit message that references this document. Push.
-2. **Merging to `main` is a deliberate, still-open decision** — the user previously stopped an attempt to merge/deploy the *old* simple static-HTML demo into this real project and asked for clarification; that confusion is resolved (this repo's real project lives on this branch), but merging Phase 3 into `main` and/or deploying it has not been explicitly requested since. Ask before merging or deploying anywhere.
-3. **Wire an actual scheduler to `POST /api/email-campaigns/run-due`** — the endpoint exists and is tested, but nothing calls it periodically yet. Needs `CAMPAIGN_CRON_SECRET` set and an external cron (hosting-platform cron, GitHub Action, etc.) pointed at it before scheduled campaigns are truly "fire and forget" in production.
-4. **Consider whether `kb-articles` should also be group-scoped**, the way `activities` and `announcements` are — currently knowledge-base content is CPE-wide only (audience is public/portal, not per-group). No evidence this is needed yet; flag if the director asks for group-specific help content.
-5. **Do not proceed to Phase 4 without explicit user/director approval.** Phase 4 is real production launch: Postgres in a Canadian region, real hosting/domain, fresh production secrets, Resend with SPF/DKIM/DMARC on the real domain, switching parent auth to magic-link, a completed Law 25 Privacy Impact Assessment, `seed:clear`, the director's real admin account, deleting demo accounts, and the director entering real content. Out of scope until then.
+**Everything code-level from the original roadmap is now done** (Phase 1
+through 3F). What remains is either (a) real-world decisions only the
+user/director can make, or (b) minor polish with no evidence it's actually
+needed yet. Nothing below is a coding task waiting on the next session
+unless the user picks one of these.
+
+1. **Deployment is explicitly on hold** (user instruction, 2026-07-18) —
+   do not deploy anywhere, and do not tell the user the project is
+   ready for deployment, until every planned feature/screen/workflow is
+   implemented *and verified*. As of this update that bar is met for
+   everything that can be verified in this environment (see §7). What's
+   left is Phase 4, below — report status honestly rather than declaring
+   "ready to deploy" prematurely.
+2. **Phase 4 — real production launch — requires the user's/director's
+   real-world inputs, not more code:**
+   - A hosting provider/account and a real domain (not yet chosen).
+   - A production Postgres instance in a Canadian region (the adapter
+     swap itself is verified — §4 — but no real instance exists).
+   - Resend (or another provider) configured with SPF/DKIM/DMARC on the
+     real domain.
+   - Fresh production secrets (`PAYLOAD_SECRET`, `CAMPAIGN_CRON_SECRET`)
+     — never reuse development values.
+   - `LAW25_PIA_TEMPLATE.md` completed and signed off by the privacy
+     officer (the director, by default) and reviewed by legal counsel
+     familiar with Québec privacy law — it is currently a structured
+     **draft**, not a finished assessment, and says so at the top.
+   - `npm run seed:clear`, the director's real admin account created,
+     demo accounts deleted.
+   - Once running more than one instance, set `CAMPAIGN_SCHEDULER=external`
+     and point a real cron at `run-due` with `CAMPAIGN_CRON_SECRET`
+     (a single instance already schedules campaigns on its own — §3).
+   None of this can be completed by an AI session alone; it needs the
+   user to make and supply these decisions. **Ask before taking any of
+   these actions**, same as the deploy gate itself.
+3. **Minor, not urgent:** consider whether `kb-articles` should also be
+   group-scoped like `activities`/`announcements` — currently knowledge-base
+   content is CPE-wide only (audience is public/portal, not per-group). No
+   evidence this is needed; flag only if the director asks for
+   group-specific help content.
 
 ---
 
