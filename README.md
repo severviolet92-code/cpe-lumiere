@@ -42,6 +42,13 @@ npm run dev                # http://localhost:3000  ·  admin: /admin
 - **Campaign scheduling actually runs**: an in-process scheduler (`src/lib/campaignScheduler.ts`) checks for due campaigns every few minutes while the app is running — no external cron required for a single-instance deployment. Set `CAMPAIGN_SCHEDULER=external` once running more than one instance, and point a real cron at `run-due` instead (see below).
 - **Magic-link parent sign-in** (`/portail`, "Lien magique" tab): the production-intended passwordless mode, alongside the original demo password login. Single-use, 15-minute link; see `src/endpoints/magicLink.ts` for the design (the one-time token is the parent's password field for the window, consumed via the existing login endpoint, rotated immediately after use).
 
+## Observability & production hardening
+
+- **Health checks**: `GET /api/health` — public, minimal liveness (DB + storage, `200`/`503`) for uptime monitors. `GET /api/system-health` — admin-only HTML dashboard with per-subsystem status/detail and recent captured errors (linked from the admin home).
+- **Centralized error capture** (`src/lib/observability.ts`): structured pino logs + an in-memory ring buffer for the health page, and — when `ERROR_REPORTING_WEBHOOK_URL` is set — a JSON forward to any external sink (Sentry proxy, log drain, serverless fn). Wired into email, campaign scheduler, the assistant, and (via `src/instrumentation.ts`) all unhandled server exceptions. Disabled/local-only until the env var is set.
+- **Boot-time env check** (`src/lib/envCheck.ts`): warns in dev, errors in production, on missing/placeholder secrets, SQLite-in-prod, missing email provider, or a localhost server URL.
+- **Go-live**: `PRODUCTION_ACTIVATION_CHECKLIST.md` lists every real-world input the owner must supply (hosting, domain, DB, email, secrets, monitoring, legal), marked required/optional with why and where each is used.
+
 ## Architecture notes
 
 - **Access control lives in one place**: `src/access/index.ts` plus per-collection `access` blocks. The public can only read published, public-audience content. Activities and announcements are **never** publicly readable (they disclose where groups of children will be and when).

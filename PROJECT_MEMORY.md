@@ -2,7 +2,7 @@
 
 > Single source of truth for continuing this project in a new AI conversation. A new assistant should be able to read this file alone and keep working correctly, without the prior chat history.
 >
-> Last updated: 2026-07-18, after Phase 3G (rehearsing `seed:clear` for real for the first time — previously only inspected, never run — confirming the demo director account, all globals, and every public page survive an emptied database cleanly). Builds on Phase 3F (KB preview, a working campaign scheduler, magic-link auth, a verified — not just claimed — Postgres swap, and a Law 25 PIA template). This document is the **architectural source of truth**, carried forward from the original planning sessions. Where the implementation has evolved beyond what was originally sketched, that evolution is documented explicitly *in place* — old plan and new reality side by side — rather than silently overwritten. Nothing in §2 (non-negotiable rules) has been weakened; where implementation details under a rule changed, the rule's *intent* was preserved and the *mechanism* was updated to match what actually ships.
+> Last updated: 2026-07-18, after Phase 3H (production-hardening / observability foundation — centralized error capture, structured logging, `/api/health` + admin System-health dashboard, boot-time env checks, fetch timeouts) plus `PRODUCTION_ACTIVATION_CHECKLIST.md`. Builds on Phase 3G (`seed:clear` rehearsal) and 3F (KB preview, working campaign scheduler, magic-link auth, verified Postgres swap, Law 25 PIA template). This document is the **architectural source of truth**, carried forward from the original planning sessions. Where the implementation has evolved beyond what was originally sketched, that evolution is documented explicitly *in place* — old plan and new reality side by side — rather than silently overwritten. Nothing in §2 (non-negotiable rules) has been weakened; where implementation details under a rule changed, the rule's *intent* was preserved and the *mechanism* was updated to match what actually ships.
 >
 > **Deployment status: NOT deployed, and not to be deployed until every planned feature, screen, and workflow is implemented and verified, and the user has explicitly reviewed and approved going live** (explicit instruction, 2026-07-18). Phase 3 is now code-complete against both this document and the original detailed feature brief (help centre + news centre + email campaigns, including the items that were initially missed — see §5 Phase 3F). Phase 4 (real hosting, Postgres, domain, Resend domain auth, Law 25 sign-off, real accounts) remains genuinely not started — §8 has the exact list.
 
@@ -181,6 +181,52 @@ environment, removed before commit) → click → lands authenticated on
 message), single-use rotation (replay fails), and that an untouched
 account's password login is completely unaffected.
 
+### Observability & production hardening (Phase 3H)
+Everything here works with **zero external credentials** and is "prepared but
+disabled" until real values are supplied — the standing constraint for this
+demo.
+- **Centralized error capture** (`src/lib/observability.ts`): `captureError()`
+  structured-logs through Payload's pino logger, keeps a capped (50) in-memory
+  ring buffer for the health page, and — only when `ERROR_REPORTING_WEBHOOK_URL`
+  is set — forwards each error to that URL as a provider-agnostic JSON envelope
+  (Sentry proxy / log drain / serverless fn). Never throws; the forward is
+  time-bounded (`AbortSignal.timeout`) so a hanging sink can't leak pending
+  fetches. Ring buffer is per-process and resets on restart (same caveat as the
+  rate limiter) — a multi-instance deployment should treat the external sink,
+  not the buffer, as the source of truth.
+- **Capture is wired into every failure surface**: email (`mailer.ts`, both the
+  Resend and adapter paths), campaign scheduler ticks (`campaignScheduler.ts`),
+  assistant question-log writes (`kbSearch.ts`), and — via
+  `src/instrumentation.ts` (Next's `onRequestError`) — any *unhandled* server
+  exception in a Server Component, route handler, or server action.
+- **Health checks** (`src/lib/health.ts`): DB (live `count`), email (config
+  only, no live send), storage (uploads dir writable), scheduler (running?),
+  error-reporting (sink configured?). Two endpoints (root-level, in
+  `src/endpoints/health.ts`, registered in `payload.config.ts`):
+  - `GET /api/health` — **public, minimal** liveness/readiness. Only the
+    critical subsystems (DB + storage), coarse statuses, `200`/`503`, no
+    detail, no secrets. **Does not call `captureError`** (it's polled
+    frequently — capturing per poll during an outage would spam the reporter).
+  - `GET /api/system-health` — **admin-only** (`403` otherwise) rich HTML
+    dashboard: every subsystem with human-readable detail + the recent captured
+    errors + a 15-minute error count. Linked from the admin dashboard home via a
+    `beforeDashboard` component (`src/components/admin/SystemHealthLink.tsx`).
+- **Boot-time env readiness check** (`src/lib/envCheck.ts`, called from
+  `onInit`): warns in dev, escalates to error-level logs in production, for a
+  missing/placeholder `PAYLOAD_SECRET`, SQLite-in-prod, no email provider, a
+  localhost `NEXT_PUBLIC_SERVER_URL`, etc. Non-fatal — the demo still runs.
+- **Fetch timeouts** added to the mailer and contact-form Resend calls so a
+  stalled provider fails fast instead of hanging a send.
+- **No hardcoded secrets**; `.env.example` rewritten with every production/
+  observability variable documented as a placeholder, grouped required vs
+  optional. The full go-live list is `PRODUCTION_ACTIVATION_CHECKLIST.md`.
+- Verified live: forced a Resend 403 and saw it appear on the health page with
+  scope+message; an isolated listener confirmed the webhook forward delivers
+  the full JSON envelope; `/api/health` → ok, `/api/system-health` admin 200 /
+  anon 403; a Phase-4 code-review pass on the new code found four minor issues
+  (health-poll capture spam, two missing fetch timeouts, a misleading comment),
+  all fixed.
+
 ### Hero visual system (3-tier) — unchanged, confirmed present
 - **Tier 0** (everyone, instant): layered static SVG "diorama" (`src/components/HeroScene.tsx`) — the page's LCP element.
 - **Tier 1** (default): CSS keyframe "drift" + JS pointer-parallax over the same SVG layers.
@@ -262,13 +308,19 @@ Warm paper background (`#faf5ec`), ink-brown text, one signature honey/amber hue
 - **The Postgres adapter swap was an untested claim** — verified it end-to-end against a real local Postgres 16 instance, then reverted to the SQLite default.
 - Also produced `LAW25_PIA_TEMPLATE.md` — a structured **draft**, explicitly not a completed assessment, to give the director/legal counsel a real starting point for the Phase 4 gate in rule 11.
 
+**Phase 3G — `seed:clear` rehearsal.** Ran the pre-handoff data wipe for real (previously only inspected): clean across all 14 flagged collections, director account + globals survive, every public page renders a graceful empty state. See §7.
+
+**Phase 3H — Production hardening / observability foundation.** In response to a "final engineering phase" brief (complete implementation → local testing → production hardening → final audit → activation checklist). Added the observability stack described in §3 (centralized error capture, structured logging, `/api/health` + admin System-health dashboard, boot-time env checks, fetch timeouts), all env-gated and disabled by default. A Phase-4-style code review of the new code found and fixed four minor issues. Produced `PRODUCTION_ACTIVATION_CHECKLIST.md` (every real-world input the owner must supply, required/optional, why, where used).
+
 ---
 
 ## 6. Current state
 
-**Status: Phase 3 (A through F) is code-complete and fully tested, merged into `main`. The application is NOT deployed anywhere, and per explicit user instruction (2026-07-18) must not be until every planned feature, screen, and workflow is implemented and verified, and the user has explicitly reviewed and approved going live.** Nothing is mid-flight. Phase 4 (see §8) remains genuinely not started — it requires real-world inputs (hosting account, domain, Postgres connection, Resend domain, legal sign-off) that only the user/director can provide, not further coding.
+**Status: Phase 3 (A through H) is code-complete and fully tested, merged into `main`. The application is NOT deployed anywhere, and per explicit user instruction must not be until every planned feature is implemented and verified AND the user has explicitly reviewed and approved going live.** Nothing is mid-flight. Everything buildable in code — including the production-hardening/observability layer — is done and verified. Phase 4 (real launch, see §8) remains genuinely not started: it requires real-world inputs (hosting account, domain, Postgres connection, email-provider + domain auth, legal sign-off) that only the user/director can provide, itemized in `PRODUCTION_ACTIVATION_CHECKLIST.md`.
 
-The assistant satisfies §2 rule 7 in full: knowledge-base-only answers, no generation, hard-gated high-risk topics checked before retrieval, every question logged and PII-scrubbed, rate-limited, and available in both the public and portal contexts. The communication suite (help centre, news centre, email campaigns) now matches the original detailed feature brief item-for-item, including the administrative capabilities (preview, scheduling that actually runs) that were initially missed. Parent authentication offers both the original demo password mode and the originally-planned magic-link mode, verified working side by side.
+The assistant satisfies §2 rule 7 in full: knowledge-base-only answers, no generation, hard-gated high-risk topics checked before retrieval, every question logged and PII-scrubbed, rate-limited, and available in both the public and portal contexts. The communication suite (help centre, news centre, email campaigns) matches the original detailed feature brief item-for-item, including preview and scheduling-that-actually-runs. Parent authentication offers both password and magic-link modes. The app has a real observability foundation (health endpoints, centralized error capture, structured logging) that is prepared but inert until production env vars are supplied.
+
+**Environment note for a future session**: this dev server runs in an ephemeral cloud container, so `localhost:3000` is NOT reachable from the user's own machine — always give the user *run instructions* (clone + `npm install` + seed + `npm run dev`) to test locally, plus screenshots/verification done here, rather than a localhost link. This has caused confusion before; state it plainly.
 
 ---
 
@@ -344,15 +396,30 @@ Run via `curl` with separate cookie jars per persona, plus a headless-browser pa
 | Every public page with all content collections empty | `200`, no JS errors, real screenshot-confirmed graceful empty states (e.g. "Aucune activité publique à l'horaire pour l'instant") — not a crash or blank page | ✅ Pass |
 | `question-log` after clear | Untouched (has no `demoSeed` field; it's real audit data, not demo content) | ✅ Pass (by design) |
 
+**Phase 3H — Observability (this session), verified live + on the production build:**
+
+| Test | Expected result | Status |
+|---|---|---|
+| `GET /api/health` unauthenticated | `200` `{status:"ok",checks:{database,storage}}` — minimal, no detail | ✅ Pass |
+| `GET /api/system-health` unauthenticated | `403` | ✅ Pass |
+| `GET /api/system-health` as admin | `200` HTML dashboard, all subsystems with status/detail | ✅ Pass |
+| Forced email failure (bogus Resend key → 403) via magic-link send | Captured: system-health shows recentErrorCount≥1, scope `email`, message "Resend HTTP 403" | ✅ Pass |
+| External webhook forward (`ERROR_REPORTING_WEBHOOK_URL` set, isolated listener) | Listener receives full JSON envelope (service, environment, at, scope, message, detail) | ✅ Pass |
+| Boot-time env check | Logs "all production-readiness variables look good" in dev | ✅ Pass |
+| Instrumentation `onRequestError` | Compiled into the build (`.next/server/instrumentation.js`) | ✅ Pass |
+| Full production build after observability additions | Clean, 33 routes, no type errors | ✅ Pass |
+| Consolidated regression matrix on the production build (10 checks: auth, access control, KB search + gate, KB preview, magic-link, health×3, log write-guard) | 10/10 pass | ✅ Pass |
+
 ---
 
 ## 8. Immediate next steps (in order)
 
-**Everything code-level from the original roadmap is now done** (Phase 1
-through 3F). What remains is either (a) real-world decisions only the
-user/director can make, or (b) minor polish with no evidence it's actually
-needed yet. Nothing below is a coding task waiting on the next session
-unless the user picks one of these.
+**Everything code-level from the original roadmap AND the production-hardening
+brief is now done** (Phase 1 through 3H). What remains is either (a) real-world
+decisions only the user/director can make, or (b) minor polish with no evidence
+it's actually needed yet. Nothing below is a coding task waiting on the next
+session unless the user picks one of these. The definitive owner-input list is
+`PRODUCTION_ACTIVATION_CHECKLIST.md`; the Phase 4 summary below mirrors it.
 
 1. **Deployment is explicitly on hold** (user instruction, 2026-07-18) —
    do not deploy anywhere, and do not tell the user the project is
