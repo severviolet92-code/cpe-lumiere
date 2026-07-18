@@ -1,6 +1,7 @@
 import type { Payload } from 'payload'
 
 import { runDueCampaigns } from './campaigns'
+import { captureError } from './observability'
 
 /**
  * In-process scheduler for `email-campaigns.scheduledAt`.
@@ -52,7 +53,7 @@ export function startCampaignScheduler(payload: Payload): void {
         )
       }
     } catch (err) {
-      payload.logger.error({ err }, 'Campaign scheduler: run-due tick failed')
+      captureError(payload, err, { scope: 'scheduler', detail: { task: 'run-due tick' } })
     }
   }
 

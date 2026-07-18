@@ -1,5 +1,7 @@
 import type { Payload } from 'payload'
 
+import { captureError } from './observability'
+
 /**
  * Provider-agnostic outgoing email.
  * Selection order:
@@ -35,10 +37,15 @@ export async function sendOne(payload: Payload, message: OutgoingEmail): Promise
           html: message.html,
           text: message.text,
         }),
+        // Fail fast rather than hang the whole campaign send if Resend stalls.
+        signal: AbortSignal.timeout(10000),
       })
       if (res.ok) return { ok: true }
-      return { ok: false, error: `Resend HTTP ${res.status}` }
+      const error = `Resend HTTP ${res.status}`
+      captureError(payload, error, { scope: 'email', detail: { provider: 'resend', to: message.to } })
+      return { ok: false, error }
     } catch (err) {
+      captureError(payload, err, { scope: 'email', detail: { provider: 'resend', to: message.to } })
       return { ok: false, error: err instanceof Error ? err.message : 'Resend request failed' }
     }
   }
@@ -52,6 +59,7 @@ export async function sendOne(payload: Payload, message: OutgoingEmail): Promise
     })
     return { ok: true }
   } catch (err) {
+    captureError(payload, err, { scope: 'email', detail: { provider: 'adapter', to: message.to } })
     return { ok: false, error: err instanceof Error ? err.message : 'Email adapter failed' }
   }
 }

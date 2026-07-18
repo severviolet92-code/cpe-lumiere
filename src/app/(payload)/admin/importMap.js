@@ -24,6 +24,7 @@ import { BoldFeatureClient as BoldFeatureClient_e70f5e05f09f93e00b997edb1ef0c864
 import { ItalicFeatureClient as ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { KBPreviewButton as KBPreviewButton_834c0b7bdd72fe0224597c9a1e94c132 } from '../../../components/admin/KBPreviewButton'
 import { CampaignActions as CampaignActions_da7396c9a20561875406c414d985f2ad } from '../../../components/admin/CampaignActions'
+import { SystemHealthLink as SystemHealthLink_a09a006d729480da066850b989384ba3 } from '../../../components/admin/SystemHealthLink'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
 /** @type import('payload').ImportMap */
@@ -54,5 +55,6 @@ export const importMap = {
   "@payloadcms/richtext-lexical/client#ItalicFeatureClient": ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "/components/admin/KBPreviewButton#KBPreviewButton": KBPreviewButton_834c0b7bdd72fe0224597c9a1e94c132,
   "/components/admin/CampaignActions#CampaignActions": CampaignActions_da7396c9a20561875406c414d985f2ad,
+  "/components/admin/SystemHealthLink#SystemHealthLink": SystemHealthLink_a09a006d729480da066850b989384ba3,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
 }

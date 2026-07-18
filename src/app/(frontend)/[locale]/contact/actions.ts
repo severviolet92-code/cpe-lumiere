@@ -55,6 +55,7 @@ export async function sendContactMessage(
           subject: `[Site CPE] Message de ${name}`,
           text: `Nom: ${name}\nCourriel: ${email}\n\n${message}`,
         }),
+        signal: AbortSignal.timeout(10000),
       })
       return res.ok ? { status: 'ok' } : { status: 'error' }
     } catch {

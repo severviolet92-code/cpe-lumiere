@@ -26,12 +26,15 @@ import { EmailCampaigns } from './collections/EmailCampaigns'
 import { QuestionLog } from './collections/QuestionLog'
 import { globals } from './globals'
 import { startCampaignScheduler } from './lib/campaignScheduler'
+import { checkEnvironment } from './lib/envCheck'
+import { healthEndpoint, systemHealthEndpoint } from './endpoints/health'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
 export default buildConfig({
   onInit: async (payload) => {
+    checkEnvironment(payload)
     startCampaignScheduler(payload)
   },
   admin: {
@@ -43,6 +46,10 @@ export default buildConfig({
       titleSuffix: ' — Lumière',
     },
     dateFormat: 'd MMMM yyyy',
+    components: {
+      // Link to the system-health dashboard from the admin home.
+      beforeDashboard: ['/components/admin/SystemHealthLink#SystemHealthLink'],
+    },
   },
   // Admin UI language: French first, English available.
   i18n: {
@@ -69,6 +76,7 @@ export default buildConfig({
     QuestionLog,
   ],
   globals,
+  endpoints: [healthEndpoint, systemHealthEndpoint],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {

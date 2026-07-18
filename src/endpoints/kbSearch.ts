@@ -2,6 +2,7 @@ import type { Endpoint, PayloadRequest } from 'payload'
 
 import { isLocale, type Locale } from '../i18n/config'
 import { hasEventIntent, lexicalPlainText, rankArticles, type SearchableArticle } from '../lib/kbSearch'
+import { captureError } from '../lib/observability'
 import { scrubPii } from '../lib/piiScrub'
 import { isRateLimited } from '../lib/rateLimit'
 import { detectRiskCategory, GATED_MESSAGE } from '../lib/riskGate'
@@ -74,8 +75,10 @@ export function makeKBSearchEndpoint(): Endpoint {
             },
             overrideAccess: true,
           })
-          .catch(() => {
-            // Logging must never break the assistant response.
+          .catch((err) => {
+            // Logging must never break the assistant response, but the failure
+            // is still worth capturing for the health page.
+            captureError(req.payload, err, { scope: 'assistant', detail: { task: 'question-log write' } })
           })
 
       const riskCategory = detectRiskCategory(q)
