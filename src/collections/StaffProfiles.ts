@@ -16,7 +16,7 @@ export const StaffProfiles: CollectionConfig = {
   admin: {
     useAsTitle: 'name',
     group: { fr: 'Contenu', en: 'Content' },
-    defaultColumns: ['name', 'jobTitle', 'consent', '_status'],
+    defaultColumns: ['name', 'jobTitle', 'department', 'consent', '_status'],
     description: {
       fr: 'Présentation publique de l’équipe. Le consentement écrit de la personne est obligatoire avant publication.',
       en: 'Public team presentation. The person’s written consent is required before publishing.',
@@ -56,6 +56,25 @@ export const StaffProfiles: CollectionConfig = {
       required: true,
       localized: true,
       label: { fr: 'Fonction', en: 'Role' },
+    },
+    {
+      name: 'department',
+      type: 'select',
+      required: true,
+      defaultValue: 'educators',
+      label: { fr: 'Secteur', en: 'Department' },
+      options: [
+        { label: { fr: 'Administration', en: 'Administration' }, value: 'administration' },
+        { label: { fr: 'Éducatrices et éducateurs', en: 'Educators' }, value: 'educators' },
+        { label: { fr: 'Cuisine', en: 'Kitchen' }, value: 'kitchen' },
+        { label: { fr: 'Spécialistes et soutien', en: 'Specialists & support' }, value: 'specialists' },
+      ],
+      admin: {
+        description: {
+          fr: 'Détermine la section de la page « Notre CPE » où la personne apparaît.',
+          en: 'Determines which section of the “Our CPE” page the person appears in.',
+        },
+      },
     },
     {
       name: 'bio',

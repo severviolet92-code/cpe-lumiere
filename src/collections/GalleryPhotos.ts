@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload'
 
-import { isAdminUser, publishedOnly } from '../access'
+import { galleryPhotosRead, isAdminUser } from '../access'
 import { demoSeedField } from '../fields/demoSeed'
 
 /**
@@ -8,6 +8,10 @@ import { demoSeedField } from '../fields/demoSeed'
  * Hidden by default (draft). A photo can only be PUBLISHED after the editor
  * explicitly confirms it shows no identifiable child and its distribution is
  * authorized — enforced server-side by a hook, not just in the UI.
+ *
+ * Visibility mirrors Activities (rule 3): `portal` by default — only parents
+ * whose groups are tagged (or all parents when no group is tagged) can see the
+ * photo. The director must explicitly choose `public` for the website gallery.
  */
 export const GalleryPhotos: CollectionConfig = {
   slug: 'gallery-photos',
@@ -25,7 +29,7 @@ export const GalleryPhotos: CollectionConfig = {
     },
   },
   access: {
-    read: publishedOnly,
+    read: galleryPhotosRead,
     create: isAdminUser,
     update: isAdminUser,
     delete: isAdminUser,
@@ -64,6 +68,38 @@ export const GalleryPhotos: CollectionConfig = {
       type: 'relationship',
       relationTo: 'activities',
       label: { fr: 'Activité liée (optionnel)', en: 'Related activity (optional)' },
+    },
+    {
+      name: 'visibility',
+      type: 'select',
+      required: true,
+      defaultValue: 'portal',
+      label: { fr: 'Visibilité', en: 'Visibility' },
+      options: [
+        { label: { fr: 'Portail parents seulement', en: 'Parent portal only' }, value: 'portal' },
+        { label: { fr: 'Site public', en: 'Public website' }, value: 'public' },
+      ],
+      admin: {
+        position: 'sidebar',
+        description: {
+          fr: 'Par défaut, une photo n’est visible que dans le portail parents. Rendre une photo publique est un choix explicite.',
+          en: 'By default a photo is only visible in the parent portal. Making it public is an explicit choice.',
+        },
+      },
+    },
+    {
+      name: 'groups',
+      type: 'relationship',
+      relationTo: 'groups',
+      hasMany: true,
+      label: { fr: 'Groupes concernés (portail)', en: 'Concerned groups (portal)' },
+      admin: {
+        position: 'sidebar',
+        description: {
+          fr: 'Dans le portail, seuls les parents de ces groupes voient la photo. Vide = toutes les familles.',
+          en: 'In the portal, only parents of these groups see the photo. Empty = all families.',
+        },
+      },
     },
     {
       name: 'consentConfirmed',

@@ -18,6 +18,7 @@ import { Documents } from './collections/Documents'
 import { StaffProfiles } from './collections/StaffProfiles'
 import { JobOpenings } from './collections/JobOpenings'
 import { GalleryPhotos } from './collections/GalleryPhotos'
+import { JobApplications } from './collections/JobApplications'
 import { Parents } from './collections/Parents'
 import { NotificationLog } from './collections/NotificationLog'
 import { KBCategories } from './collections/KBCategories'
@@ -68,6 +69,7 @@ export default buildConfig({
     StaffProfiles,
     JobOpenings,
     GalleryPhotos,
+    JobApplications,
     Parents,
     NotificationLog,
     KBCategories,

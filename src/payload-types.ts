@@ -79,6 +79,7 @@ export interface Config {
     'staff-profiles': StaffProfile;
     'job-openings': JobOpening;
     'gallery-photos': GalleryPhoto;
+    'job-applications': JobApplication;
     parents: Parent;
     'notification-log': NotificationLog;
     'kb-categories': KbCategory;
@@ -103,6 +104,7 @@ export interface Config {
     'staff-profiles': StaffProfilesSelect<false> | StaffProfilesSelect<true>;
     'job-openings': JobOpeningsSelect<false> | JobOpeningsSelect<true>;
     'gallery-photos': GalleryPhotosSelect<false> | GalleryPhotosSelect<true>;
+    'job-applications': JobApplicationsSelect<false> | JobApplicationsSelect<true>;
     parents: ParentsSelect<false> | ParentsSelect<true>;
     'notification-log': NotificationLogSelect<false> | NotificationLogSelect<true>;
     'kb-categories': KbCategoriesSelect<false> | KbCategoriesSelect<true>;
@@ -123,6 +125,7 @@ export interface Config {
     'home-page': HomePage;
     'about-page': AboutPage;
     'life-page': LifePage;
+    'nutrition-page': NutritionPage;
     'admission-page': AdmissionPage;
     'careers-page': CareersPage;
   };
@@ -131,6 +134,7 @@ export interface Config {
     'home-page': HomePageSelect<false> | HomePageSelect<true>;
     'about-page': AboutPageSelect<false> | AboutPageSelect<true>;
     'life-page': LifePageSelect<false> | LifePageSelect<true>;
+    'nutrition-page': NutritionPageSelect<false> | NutritionPageSelect<true>;
     'admission-page': AdmissionPageSelect<false> | AdmissionPageSelect<true>;
     'careers-page': CareersPageSelect<false> | CareersPageSelect<true>;
   };
@@ -267,6 +271,10 @@ export interface Group {
   id: number;
   name: string;
   ageRange: string;
+  /**
+   * What children in this group experience: rhythm, learning, ratio. No information about any specific child.
+   */
+  description?: string | null;
   /**
    * Chosen from the site palette — visual consistency is automatic.
    */
@@ -463,6 +471,10 @@ export interface StaffProfile {
   id: number;
   name: string;
   jobTitle: string;
+  /**
+   * Determines which section of the “Our CPE” page the person appears in.
+   */
+  department: 'administration' | 'educators' | 'kitchen' | 'specialists';
   bio?: string | null;
   photo?: (number | null) | Media;
   consent?: boolean | null;
@@ -497,6 +509,21 @@ export interface JobOpening {
     };
     [k: string]: unknown;
   };
+  qualifications?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
   demoSeed?: boolean | null;
   updatedAt: string;
   createdAt: string;
@@ -513,6 +540,14 @@ export interface GalleryPhoto {
   caption: string;
   takenAt: string;
   activity?: (number | null) | Activity;
+  /**
+   * By default a photo is only visible in the parent portal. Making it public is an explicit choice.
+   */
+  visibility: 'portal' | 'public';
+  /**
+   * In the portal, only parents of these groups see the photo. Empty = all families.
+   */
+  groups?: (number | Group)[] | null;
   consentConfirmed?: boolean | null;
   demoSeed?: boolean | null;
   updatedAt: string;
@@ -545,6 +580,32 @@ export interface GalleryPhoto {
       filename?: string | null;
     };
   };
+}
+/**
+ * Applications received via the Careers page. Personal information: delete once the hiring round is over.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "job-applications".
+ */
+export interface JobApplication {
+  id: number;
+  name: string;
+  email: string;
+  phone?: string | null;
+  jobOpening?: (number | null) | JobOpening;
+  message?: string | null;
+  demoSeed?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
 }
 /**
  * Parent portal accounts, created by the administration only. Deactivate the account when a family leaves the CPE.
@@ -811,6 +872,10 @@ export interface PayloadLockedDocument {
         value: number | GalleryPhoto;
       } | null)
     | ({
+        relationTo: 'job-applications';
+        value: number | JobApplication;
+      } | null)
+    | ({
         relationTo: 'parents';
         value: number | Parent;
       } | null)
@@ -970,6 +1035,7 @@ export interface MediaSelect<T extends boolean = true> {
 export interface GroupsSelect<T extends boolean = true> {
   name?: T;
   ageRange?: T;
+  description?: T;
   color?: T;
   order?: T;
   active?: T;
@@ -1079,6 +1145,7 @@ export interface DocumentsSelect<T extends boolean = true> {
 export interface StaffProfilesSelect<T extends boolean = true> {
   name?: T;
   jobTitle?: T;
+  department?: T;
   bio?: T;
   photo?: T;
   consent?: T;
@@ -1096,6 +1163,7 @@ export interface JobOpeningsSelect<T extends boolean = true> {
   title?: T;
   schedule?: T;
   description?: T;
+  qualifications?: T;
   demoSeed?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1109,6 +1177,8 @@ export interface GalleryPhotosSelect<T extends boolean = true> {
   caption?: T;
   takenAt?: T;
   activity?: T;
+  visibility?: T;
+  groups?: T;
   consentConfirmed?: T;
   demoSeed?: T;
   updatedAt?: T;
@@ -1147,6 +1217,29 @@ export interface GalleryPhotosSelect<T extends boolean = true> {
               filename?: T;
             };
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "job-applications_select".
+ */
+export interface JobApplicationsSelect<T extends boolean = true> {
+  name?: T;
+  email?: T;
+  phone?: T;
+  jobOpening?: T;
+  message?: T;
+  demoSeed?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1354,6 +1447,25 @@ export interface HomePage {
 export interface AboutPage {
   id: number;
   intro?: string | null;
+  /**
+   * One or two strong sentences — the CPE’s reason for being.
+   */
+  mission?: string | null;
+  history?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
   pedagogy?: {
     root: {
       type: string;
@@ -1411,7 +1523,53 @@ export interface LifePage {
         id?: string | null;
       }[]
     | null;
+  groupsIntro?: string | null;
+  development?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
   meals?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  naps?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  outdoor?: {
     root: {
       type: string;
       children: {
@@ -1441,6 +1599,78 @@ export interface LifePage {
     };
     [k: string]: unknown;
   } | null;
+  safety?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "nutrition-page".
+ */
+export interface NutritionPage {
+  id: number;
+  intro?: string | null;
+  philosophy?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * A sample week — the up-to-date detailed menu is attached as a PDF below.
+   */
+  weeklyMenu?:
+    | {
+        day: string;
+        snackAm?: string | null;
+        lunch: string;
+        snackPm?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  allergies?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * The document must be public to be downloadable from the website.
+   */
+  menuDocument?: (number | null) | Document;
+  photos?: (number | Media)[] | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -1549,6 +1779,8 @@ export interface HomePageSelect<T extends boolean = true> {
  */
 export interface AboutPageSelect<T extends boolean = true> {
   intro?: T;
+  mission?: T;
+  history?: T;
   pedagogy?: T;
   values?:
     | T
@@ -1575,8 +1807,36 @@ export interface LifePageSelect<T extends boolean = true> {
         moment?: T;
         id?: T;
       };
+  groupsIntro?: T;
+  development?: T;
   meals?: T;
+  naps?: T;
+  outdoor?: T;
   activities?: T;
+  safety?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "nutrition-page_select".
+ */
+export interface NutritionPageSelect<T extends boolean = true> {
+  intro?: T;
+  philosophy?: T;
+  weeklyMenu?:
+    | T
+    | {
+        day?: T;
+        snackAm?: T;
+        lunch?: T;
+        snackPm?: T;
+        id?: T;
+      };
+  allergies?: T;
+  menuDocument?: T;
+  photos?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

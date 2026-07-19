@@ -60,6 +60,28 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
         </div>
       </section>
 
+      {about?.mission && (
+        <section className="section section--warm" style={{ paddingTop: '2.5rem', paddingBottom: '2.5rem' }}>
+          <div className="container">
+            <Reveal>
+              <p className="eyebrow">{dict.about.mission}</p>
+              <p className="lede" style={{ fontSize: '1.35rem', maxWidth: '760px' }}>{about.mission}</p>
+            </Reveal>
+          </div>
+        </section>
+      )}
+
+      {about?.history && (
+        <section className="section" style={{ paddingTop: '2rem' }}>
+          <div className="container">
+            <Reveal>
+              <p className="eyebrow eyebrow--lavande">{dict.about.history}</p>
+              <RichTextBlock data={about.history} />
+            </Reveal>
+          </div>
+        </section>
+      )}
+
       {about?.pedagogy && (
         <section className="section" style={{ paddingTop: '2rem' }}>
           <div className="container">
@@ -109,31 +131,49 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
               <div className="section-head">
                 <p className="eyebrow eyebrow--ciel">{dict.about.team}</p>
               </div>
-              <div className="card-grid">
-                {team.docs.map((member) => {
-                  const photo =
-                    member.photo && typeof member.photo === 'object' ? member.photo : null
-                  return (
-                    <div className="card" key={member.id}>
-                      {photo?.url && (
-                        <Image
-                          src={photo.sizes?.card?.url || photo.url}
-                          alt={photo.alt || member.name}
-                          width={photo.sizes?.card?.width || 800}
-                          height={photo.sizes?.card?.height || 600}
-                          style={{ borderRadius: '12px', marginBottom: '1rem', objectFit: 'cover' }}
-                        />
-                      )}
-                      <h3>{member.name}</h3>
-                      <p style={{ color: 'var(--honey-deep)', fontWeight: 600, marginBottom: '0.5rem' }}>
-                        {member.jobTitle}
-                      </p>
-                      {member.bio && <p>{member.bio}</p>}
-                    </div>
-                  )
-                })}
-              </div>
             </Reveal>
+            {(['administration', 'educators', 'kitchen', 'specialists'] as const).map((dept) => {
+              const members = team.docs.filter((m) => m.department === dept)
+              if (members.length === 0) return null
+              return (
+                <Reveal key={dept}>
+                  <h3
+                    style={{
+                      marginTop: '2.4rem',
+                      marginBottom: '1.2rem',
+                      color: 'var(--ink-soft)',
+                      fontSize: '1.15rem',
+                    }}
+                  >
+                    {dict.about.departments[dept]}
+                  </h3>
+                  <div className="card-grid">
+                    {members.map((member) => {
+                      const photo =
+                        member.photo && typeof member.photo === 'object' ? member.photo : null
+                      return (
+                        <div className="card" key={member.id}>
+                          {photo?.url && (
+                            <Image
+                              src={photo.sizes?.card?.url || photo.url}
+                              alt={photo.alt || member.name}
+                              width={photo.sizes?.card?.width || 800}
+                              height={photo.sizes?.card?.height || 600}
+                              style={{ borderRadius: '12px', marginBottom: '1rem', objectFit: 'cover' }}
+                            />
+                          )}
+                          <h3>{member.name}</h3>
+                          <p style={{ color: 'var(--honey-deep)', fontWeight: 600, marginBottom: '0.5rem' }}>
+                            {member.jobTitle}
+                          </p>
+                          {member.bio && <p>{member.bio}</p>}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </Reveal>
+              )
+            })}
           </div>
         </section>
       )}

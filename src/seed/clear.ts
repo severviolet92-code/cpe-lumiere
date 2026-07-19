@@ -21,6 +21,7 @@ const COLLECTIONS = [
   'closure-dates',
   'faq-entries',
   'staff-profiles',
+  'job-applications',
   'job-openings',
   'documents',
   'media',

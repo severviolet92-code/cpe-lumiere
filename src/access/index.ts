@@ -109,6 +109,37 @@ export const kbArticlesRead: Access = ({ req }) => {
 export const kbCategoriesRead: Access = ({ req }) => Boolean(req.user)
 
 /**
+ * Gallery photos: admin sees all; a parent sees published photos that are
+ * public, group-untagged (all families) or tagged with one of their groups;
+ * the public sees only photos the director explicitly marked
+ * `visibility: public` (and published). Portal-only by default (rule 3 —
+ * same reasoning as activities: photos disclose where a group of children
+ * was, so parents-only is the safe default).
+ */
+export const galleryPhotosRead: Access = ({ req }) => {
+  if (req.user?.collection === 'users') return true
+  if (req.user?.collection === 'parents') {
+    const where: Where = {
+      and: [
+        { _status: { equals: 'published' } },
+        {
+          or: [
+            { visibility: { equals: 'public' } },
+            { groups: { exists: false } },
+            { groups: { in: parentGroupIds(req) } },
+          ],
+        },
+      ],
+    }
+    return where
+  }
+  const where: Where = {
+    and: [{ visibility: { equals: 'public' } }, { _status: { equals: 'published' } }],
+  }
+  return where
+}
+
+/**
  * Activities: admin sees all; a parent sees published activities of their own
  * group(s) only; the public sees only activities the director explicitly marked
  * `visibility: public` (and published). Private by default.

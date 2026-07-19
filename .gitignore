@@ -46,6 +46,9 @@ next-env.d.ts
 /documents
 /gallery-photos
 
+# Job applications (CVs) — personal information, never tracked
+/job-applications
+
 # Playwright
 node_modules/
 /test-results/

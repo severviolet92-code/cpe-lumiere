@@ -1,12 +1,12 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
 import { Reveal } from '../../../../components/Reveal'
 import { RichTextBlock } from '../../../../components/RichTextBlock'
-import { isLocale, localizedPath, type Locale } from '../../../../i18n/config'
+import { isLocale, type Locale } from '../../../../i18n/config'
 import { t } from '../../../../i18n/ui'
 import { getPayload } from '../../../../lib/payload'
+import { ApplicationForm } from './ApplicationForm'
 
 export async function generateMetadata({
   params,
@@ -94,15 +94,36 @@ export default async function CareersPage({ params }: { params: Promise<{ locale
                     <div style={{ marginTop: '0.8rem' }}>
                       <RichTextBlock data={job.description} />
                     </div>
+                    {job.qualifications && (
+                      <div style={{ marginTop: '0.8rem' }}>
+                        <p className="eyebrow" style={{ marginBottom: '0.4rem' }}>{dict.careers.qualifications}</p>
+                        <RichTextBlock data={job.qualifications} />
+                      </div>
+                    )}
                     <p style={{ marginTop: '1rem', marginBottom: 0 }}>
-                      <Link className="btn btn--ghost" href={localizedPath(locale, '/contact')}>
+                      <a className="btn btn--ghost" href="#postuler">
                         {dict.careers.apply}
-                      </Link>
+                      </a>
                     </p>
                   </div>
                 ))}
               </div>
             )}
+          </Reveal>
+        </div>
+      </section>
+
+      <section className="section section--warm" id="postuler">
+        <div className="container">
+          <Reveal>
+            <div className="section-head">
+              <p className="eyebrow eyebrow--terracotta">{dict.careers.form.spontaneousTitle}</p>
+              <p className="lede">{dict.careers.form.spontaneousLede}</p>
+            </div>
+            <ApplicationForm
+              locale={locale}
+              openings={openings.docs.map((job) => ({ id: job.id, title: job.title }))}
+            />
           </Reveal>
         </div>
       </section>

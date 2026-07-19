@@ -117,6 +117,24 @@ export const AboutPage: GlobalConfig = {
   fields: [
     { name: 'intro', type: 'textarea', localized: true, label: { fr: 'Introduction', en: 'Introduction' } },
     {
+      name: 'mission',
+      type: 'textarea',
+      localized: true,
+      label: { fr: 'Notre mission', en: 'Our mission' },
+      admin: {
+        description: {
+          fr: 'Une ou deux phrases fortes — la raison d’être du CPE.',
+          en: 'One or two strong sentences — the CPE’s reason for being.',
+        },
+      },
+    },
+    {
+      name: 'history',
+      type: 'richText',
+      localized: true,
+      label: { fr: 'Notre histoire', en: 'Our history' },
+    },
+    {
       name: 'pedagogy',
       type: 'richText',
       localized: true,
@@ -167,12 +185,104 @@ export const LifePage: GlobalConfig = {
         },
       },
     },
+    {
+      name: 'groupsIntro',
+      type: 'textarea',
+      localized: true,
+      label: { fr: 'Introduction de la section « Nos groupes »', en: '“Our groups” section intro' },
+    },
+    {
+      name: 'development',
+      type: 'richText',
+      localized: true,
+      label: { fr: 'Le développement de l’enfant (objectifs d’apprentissage)', en: 'Child development (learning objectives)' },
+    },
     { name: 'meals', type: 'richText', localized: true, label: { fr: 'Alimentation', en: 'Meals' } },
+    {
+      name: 'naps',
+      type: 'richText',
+      localized: true,
+      label: { fr: 'Sieste et repos', en: 'Naps & rest' },
+    },
+    {
+      name: 'outdoor',
+      type: 'richText',
+      localized: true,
+      label: { fr: 'Jeux extérieurs', en: 'Outdoor play' },
+    },
     {
       name: 'activities',
       type: 'richText',
       localized: true,
       label: { fr: 'Nos activités (description générale)', en: 'Our activities (general description)' },
+    },
+    {
+      name: 'safety',
+      type: 'richText',
+      localized: true,
+      label: { fr: 'Santé et sécurité', en: 'Health & safety' },
+    },
+  ],
+}
+
+export const NutritionPage: GlobalConfig = {
+  slug: 'nutrition-page',
+  label: { fr: 'Page : Cuisine et nutrition', en: 'Page: Kitchen & nutrition' },
+  admin: { group: contentGroup },
+  access: { read: () => true, update: isAdminUser },
+  fields: [
+    { name: 'intro', type: 'textarea', localized: true, label: { fr: 'Introduction', en: 'Introduction' } },
+    {
+      name: 'philosophy',
+      type: 'richText',
+      localized: true,
+      label: { fr: 'Notre philosophie alimentaire', en: 'Our food philosophy' },
+    },
+    {
+      name: 'weeklyMenu',
+      type: 'array',
+      localized: true,
+      maxRows: 5,
+      label: { fr: 'Menu de la semaine (exemple type)', en: 'Weekly menu (typical example)' },
+      labels: { singular: { fr: 'Journée', en: 'Day' }, plural: { fr: 'Journées', en: 'Days' } },
+      fields: [
+        { name: 'day', type: 'text', required: true, label: { fr: 'Jour', en: 'Day' }, admin: { width: '20%' } },
+        { name: 'snackAm', type: 'text', label: { fr: 'Collation du matin', en: 'Morning snack' } },
+        { name: 'lunch', type: 'text', required: true, label: { fr: 'Dîner', en: 'Lunch' } },
+        { name: 'snackPm', type: 'text', label: { fr: 'Collation de l’après-midi', en: 'Afternoon snack' } },
+      ],
+      admin: {
+        description: {
+          fr: 'Un exemple de semaine — le menu détaillé à jour est joint en PDF ci-dessous.',
+          en: 'A sample week — the up-to-date detailed menu is attached as a PDF below.',
+        },
+      },
+    },
+    {
+      name: 'allergies',
+      type: 'richText',
+      localized: true,
+      label: { fr: 'Allergies et intolérances', en: 'Allergies & intolerances' },
+    },
+    {
+      name: 'menuDocument',
+      type: 'relationship',
+      relationTo: 'documents',
+      label: { fr: 'Menu téléchargeable (PDF)', en: 'Downloadable menu (PDF)' },
+      admin: {
+        description: {
+          fr: 'Le document doit être public pour être téléchargeable depuis le site.',
+          en: 'The document must be public to be downloadable from the website.',
+        },
+      },
+    },
+    {
+      name: 'photos',
+      type: 'relationship',
+      relationTo: 'media',
+      hasMany: true,
+      maxRows: 6,
+      label: { fr: 'Photos de repas (illustrations)', en: 'Meal photos (illustrations)' },
     },
   ],
 }
@@ -231,4 +341,4 @@ export const CareersPage: GlobalConfig = {
   ],
 }
 
-export const globals = [SiteSettings, HomePage, AboutPage, LifePage, AdmissionPage, CareersPage]
+export const globals = [SiteSettings, HomePage, AboutPage, LifePage, NutritionPage, AdmissionPage, CareersPage]

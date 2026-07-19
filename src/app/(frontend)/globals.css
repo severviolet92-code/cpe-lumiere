@@ -120,6 +120,7 @@ h2 em,
 .eyebrow--sauge { color: var(--sauge-deep); }
 .eyebrow--terracotta { color: var(--terracotta-deep); }
 .eyebrow--ciel { color: var(--ciel-deep); }
+.eyebrow--lavande { color: var(--lavande-deep); }
 
 p {
   margin: 0 0 1em;
@@ -533,6 +534,45 @@ summary:focus-visible {
 .chip--lavande { background: var(--lavande-whisper); color: var(--lavande-deep); }
 .chip--lavande .group-chip__dot { background: var(--lavande); }
 
+/* ---------- Menu table (nutrition page) ---------- */
+
+.menu-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--paper-raised, #fffaf0);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(56, 41, 26, 0.08);
+  font-size: 0.95rem;
+}
+
+.menu-table th,
+.menu-table td {
+  padding: 0.85rem 1rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid rgba(56, 41, 26, 0.08);
+}
+
+.menu-table thead th {
+  background: var(--honey-whisper);
+  color: var(--honey-deep);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.menu-table tbody th {
+  color: var(--ink);
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.menu-table tbody tr:last-child th,
+.menu-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
 /* ---------- Activity cards ---------- */
 
 .activity-grid {
@@ -868,7 +908,8 @@ summary:focus-visible {
 }
 
 .field input,
-.field textarea {
+.field textarea,
+.field select {
   width: 100%;
   padding: 0.85rem 1.1rem;
   border-radius: 14px;
@@ -879,10 +920,16 @@ summary:focus-visible {
 }
 
 .field input:focus,
-.field textarea:focus {
+.field textarea:focus,
+.field select:focus {
   outline: 3px solid var(--ciel);
   outline-offset: 1px;
   border-color: transparent;
+}
+
+.field input[type='file'] {
+  padding: 0.65rem 0.9rem;
+  font-size: 0.92rem;
 }
 
 .form-note {

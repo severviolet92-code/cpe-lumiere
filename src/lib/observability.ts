@@ -29,6 +29,7 @@ export type ErrorScope =
   | 'storage'
   | 'auth'
   | 'assistant'
+  | 'careers'
   | 'unexpected'
 
 export type CapturedError = {

@@ -23,6 +23,7 @@ export function SiteFooter({ locale, settings }: { locale: Locale; settings: Sit
             <h4>{dict.footer.quickLinks}</h4>
             <ul>
               <li><Link href={localizedPath(locale, '/admission')}>{dict.nav.admission}</Link></li>
+              <li><Link href={localizedPath(locale, '/nutrition')}>{dict.nav.nutrition}</Link></li>
               <li><Link href={localizedPath(locale, '/faq')}>{dict.nav.faq}</Link></li>
               <li><Link href={localizedPath(locale, '/carrieres')}>{dict.nav.careers}</Link></li>
               <li><Link href={localizedPath(locale, '/portail')}>{dict.nav.portal}</Link></li>

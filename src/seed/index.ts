@@ -10,7 +10,8 @@ import { getPayload, type Payload } from 'payload'
 
 import config from '../payload.config'
 import { makeDemoPdf } from './demoPdf'
-import { renderIllustration } from './illustrations'
+import { renderIllustration, renderPortrait } from './illustrations'
+import { kbSeedArticles } from './kb'
 import { rt } from './richText'
 
 const DEMO_DIRECTOR_EMAIL = 'direction@voielactee-demo.example'
@@ -35,6 +36,23 @@ async function uploadIllustration(
     file: { data, mimetype: 'image/png', name: `demo-${theme}.png`, size: data.length },
   })
   await payload.update({ collection: 'media', id: doc.id, locale: 'en', data: { alt: altEn } })
+  return doc.id as number
+}
+
+async function uploadPortrait(payload: Payload, index: number, name: string): Promise<number> {
+  const data = await renderPortrait(index)
+  const doc = await payload.create({
+    collection: 'media',
+    locale: 'fr',
+    data: { alt: `Avatar illustré — ${name}`, demoSeed: true },
+    file: { data, mimetype: 'image/png', name: `demo-portrait-${index}.png`, size: data.length },
+  })
+  await payload.update({
+    collection: 'media',
+    id: doc.id,
+    locale: 'en',
+    data: { alt: `Illustrated avatar — ${name}` },
+  })
   return doc.id as number
 }
 
@@ -73,11 +91,81 @@ async function run() {
 
   // ---- Groups: 6 months to 5 years ----
   const groupDefs = [
-    { fr: { name: 'Les Poussins', ageRange: '6 à 18 mois' }, en: { name: 'Les Poussins', ageRange: '6 to 18 months' }, color: 'miel' },
-    { fr: { name: 'Les Lapinots', ageRange: '18 mois à 2 ans' }, en: { name: 'Les Lapinots', ageRange: '18 months to 2 years' }, color: 'ciel' },
-    { fr: { name: 'Les Papillons', ageRange: '2 à 3 ans' }, en: { name: 'Les Papillons', ageRange: '2 to 3 years' }, color: 'lavande' },
-    { fr: { name: 'Les Renardeaux', ageRange: '3 à 4 ans' }, en: { name: 'Les Renardeaux', ageRange: '3 to 4 years' }, color: 'terracotta' },
-    { fr: { name: 'Les Explorateurs', ageRange: '4 à 5 ans' }, en: { name: 'Les Explorateurs', ageRange: '4 to 5 years' }, color: 'sauge' },
+    {
+      fr: {
+        name: 'Les Poussins',
+        ageRange: '6 à 18 mois',
+        description:
+          'La pouponnière : un cocon calme où chaque bébé garde son propre rythme de boires, de siestes et de découvertes sensorielles, avec une éducatrice pour cinq poupons.',
+      },
+      en: {
+        name: 'Les Poussins',
+        ageRange: '6 to 18 months',
+        description:
+          'The infant room: a calm cocoon where each baby keeps their own rhythm of feeds, naps and sensory discoveries, with one educator for five infants.',
+      },
+      color: 'miel',
+    },
+    {
+      fr: {
+        name: 'Les Lapinots',
+        ageRange: '18 mois à 2 ans',
+        description:
+          'L’âge des premiers pas assurés et des premiers mots : on grimpe, on transvide, on imite — et on apprend à vivre ensemble, un « à ton tour » à la fois.',
+      },
+      en: {
+        name: 'Les Lapinots',
+        ageRange: '18 months to 2 years',
+        description:
+          'The age of confident first steps and first words: climbing, pouring, imitating — and learning to live together, one “your turn” at a time.',
+      },
+      color: 'ciel',
+    },
+    {
+      fr: {
+        name: 'Les Papillons',
+        ageRange: '2 à 3 ans',
+        description:
+          'Le grand bond du langage et de l’imaginaire : jeux symboliques, comptines, premiers ateliers de peinture et apprentissage de la propreté, chacun à son rythme.',
+      },
+      en: {
+        name: 'Les Papillons',
+        ageRange: '2 to 3 years',
+        description:
+          'The great leap of language and imagination: pretend play, rhymes, first painting workshops and toilet learning, each at their own pace.',
+      },
+      color: 'lavande',
+    },
+    {
+      fr: {
+        name: 'Les Renardeaux',
+        ageRange: '3 à 4 ans',
+        description:
+          'Curieux et débordants d’énergie : projets de groupe, jeux coopératifs, sciences pour tout-petits et grandes explorations dans la cour et le quartier.',
+      },
+      en: {
+        name: 'Les Renardeaux',
+        ageRange: '3 to 4 years',
+        description:
+          'Curious and bursting with energy: group projects, cooperative games, toddler science and big explorations in the yard and neighbourhood.',
+      },
+      color: 'terracotta',
+    },
+    {
+      fr: {
+        name: 'Les Explorateurs',
+        ageRange: '4 à 5 ans',
+        description:
+          'La dernière année avant la maternelle : autonomie, responsabilités, jeux de règles, motricité fine — tout ce qu’il faut pour partir vers l’école la tête haute.',
+      },
+      en: {
+        name: 'Les Explorateurs',
+        ageRange: '4 to 5 years',
+        description:
+          'The last year before kindergarten: autonomy, responsibilities, rule games, fine motor skills — everything needed to head off to school standing tall.',
+      },
+      color: 'sauge',
+    },
   ] as const
 
   const groupIds: number[] = []
@@ -179,6 +267,13 @@ async function run() {
     data: {
       intro:
         'Le CPE La Voie lactée accueille des enfants de 6 mois à 5 ans dans un milieu lumineux, à échelle d’enfant, où chaque espace a été pensé pour la découverte. (Description de démonstration.)',
+      mission:
+        'Offrir à chaque enfant un milieu de vie chaleureux, sécuritaire et stimulant, où il grandit à son rythme, entouré d’adultes stables qui croient en lui — et offrir à chaque famille un partenaire de confiance, jour après jour.',
+      history: rt(
+        'Le CPE La Voie lactée est né du rêve d’un groupe de parents du quartier : un milieu de garde à échelle humaine, où la douceur compte autant que la pédagogie. (Récit fictif de démonstration.)',
+        'Depuis, la petite équipe fondatrice est devenue une équipe stable d’une quinzaine de personnes, la cour s’est enrichie d’un potager et de grands modules de bois, et des centaines d’enfants ont fait ici leurs premiers pas, leurs premières amitiés et leurs premiers « moi capable ! ».',
+        'Le CPE demeure ce qu’il était au premier jour : un organisme sans but lucratif gouverné par les parents, enraciné dans son quartier.',
+      ),
       pedagogy: rt(
         'Notre approche s’inspire du programme éducatif « Accueillir la petite enfance » du ministère de la Famille. L’enfant est l’acteur principal de son développement : nous préparons un environnement riche, puis nous l’accompagnons dans ses explorations plutôt que de les diriger.',
         'Chaque groupe suit le rythme de ses enfants — les poupons ont leurs propres routines de sommeil et de repas, et les plus grands construisent doucement leur autonomie en vue de la maternelle.',
@@ -200,6 +295,13 @@ async function run() {
     data: {
       intro:
         'CPE La Voie lactée welcomes children aged 6 months to 5 years in a bright, child-scaled environment where every space was designed for discovery. (Demonstration description.)',
+      mission:
+        'To offer every child a warm, safe and stimulating living environment where they grow at their own pace, surrounded by stable adults who believe in them — and to offer every family a trusted partner, day after day.',
+      history: rt(
+        'CPE La Voie lactée was born from the dream of a group of neighbourhood parents: a human-scale childcare setting where gentleness matters as much as pedagogy. (Fictional demonstration story.)',
+        'Since then, the small founding team has grown into a stable team of about fifteen people, the yard has gained a vegetable garden and big wooden structures, and hundreds of children have taken their first steps, made their first friendships and shouted their first “I did it!” here.',
+        'The CPE remains what it was on day one: a non-profit governed by parents, rooted in its neighbourhood.',
+      ),
       pedagogy: rt(
         'Our approach is inspired by the ministère de la Famille’s educational program “Accueillir la petite enfance”. The child is the main actor of their own development: we prepare a rich environment, then accompany their explorations rather than directing them.',
         'Each group follows its children’s rhythm — infants keep their own sleep and meal routines, while the older ones gently build the autonomy they will need for kindergarten.',
@@ -234,13 +336,32 @@ async function run() {
         { time: '15 h 30', moment: 'Jeux libres et retour au calme' },
         { time: '17 h', moment: 'Départs et au revoir' },
       ],
+      groupsIntro:
+        'Cinq groupes, un par étape : chaque local, chaque routine et chaque activité est pensé pour l’âge des enfants qui y vivent.',
+      development: rt(
+        'Nous suivons le programme éducatif « Accueillir la petite enfance » : l’enfant apprend par le jeu, dans tous les domaines à la fois — physique et moteur, cognitif, langagier, social et affectif.',
+        'Concrètement : la motricité fine se construit dans la pâte à modeler et les perles, le langage dans les histoires et les causeries, les mathématiques dans les blocs et les recettes, et la confiance en soi dans chaque « moi capable ! » entendu et encouragé.',
+        'Deux fois par année, le dossier éducatif de votre enfant vous présente un portrait de son développement, appuyé sur les observations quotidiennes de son éducatrice.',
+      ),
       meals: rt(
         'Tous les repas et collations sont préparés sur place. Les menus, affichés chaque semaine, suivent le Guide alimentaire canadien et sont adaptés aux allergies et intolérances de chaque enfant.',
         'Les poupons suivent leur propre horaire de boires et de purées, en continuité avec les habitudes de la maison.',
       ),
+      naps: rt(
+        'Après le dîner, chaque groupe retrouve son dortoir : lumière tamisée, musique douce, doudous. Les enfants qui ne dorment plus se reposent avec des livres après 45 minutes — le repos est un besoin, le sommeil n’est jamais forcé.',
+        'À la pouponnière, chaque bébé dort selon son propre horaire, sur le dos, dans son lit individuel, selon les pratiques de sommeil sécuritaire.',
+      ),
+      outdoor: rt(
+        'Dehors deux fois par jour, en toute saison : la cour clôturée offre des zones distinctes pour les poupons et les grands, un potager, des modules de bois et de l’ombre pour l’été.',
+        'L’hiver ne nous arrête pas — glissade, châteaux de neige et peinture sur neige remplacent le carré de sable. Seules les conditions extrêmes nous gardent à l’intérieur, où la salle de motricité prend le relais.',
+      ),
       activities: rt(
         'Peinture, bacs sensoriels, musique, yoga des petits, jardinage dans la cour et grandes marches d’exploration : nos activités varient au fil des saisons et suivent les intérêts des enfants.',
         'Chaque semaine comprend aussi des moments de psychomotricité en salle de motricité, pour bouger, grimper et sauter en toute sécurité.',
+      ),
+      safety: rt(
+        'Portes verrouillées avec code d’accès familial, cour conforme et inspectée, exercices d’évacuation réguliers, personnel entièrement certifié en premiers soins et vérification d’absence d’empêchement pour chaque adulte du milieu.',
+        'Les ratios réglementaires sont respectés en tout temps, y compris pendant les sorties, où ils sont volontairement renforcés. En cas d’incident, même mineur, vous êtes informés le jour même.',
       ),
     },
   })
@@ -261,13 +382,32 @@ async function run() {
         { time: '3:30', moment: 'Free play and winding down' },
         { time: '5 p.m.', moment: 'Departures and goodbyes' },
       ],
+      groupsIntro:
+        'Five groups, one per stage: every room, routine and activity is designed for the age of the children living there.',
+      development: rt(
+        'We follow the educational program “Accueillir la petite enfance”: children learn through play, across every domain at once — physical and motor, cognitive, language, social and emotional.',
+        'Concretely: fine motor skills grow in playdough and beads, language in stories and circle time, mathematics in blocks and recipes, and self-confidence in every encouraged “I did it!”.',
+        'Twice a year, your child’s educational file gives you a portrait of their development, grounded in their educator’s daily observations.',
+      ),
       meals: rt(
         'All meals and snacks are prepared on site. Weekly menus follow Canada’s Food Guide and are adapted to each child’s allergies and intolerances.',
         'Infants keep their own schedule of bottles and purées, in continuity with home routines.',
       ),
+      naps: rt(
+        'After lunch, each group settles into its rest area: dimmed lights, soft music, comfort blankets. Children who no longer sleep rest with books after 45 minutes — rest is a need, sleep is never forced.',
+        'In the infant room, each baby sleeps on their own schedule, on their back, in their individual crib, following safe-sleep practices.',
+      ),
+      outdoor: rt(
+        'Outside twice a day, in every season: the fenced yard has separate areas for infants and older children, a vegetable garden, wooden structures and summer shade.',
+        'Winter does not stop us — sliding, snow castles and snow painting replace the sandbox. Only extreme conditions keep us inside, where the motor-skills room takes over.',
+      ),
       activities: rt(
         'Painting, sensory bins, music, toddler yoga, gardening in the yard and long exploration walks: our activities change with the seasons and follow the children’s interests.',
         'Every week also includes gross-motor time in the motor-skills room — moving, climbing and jumping safely.',
+      ),
+      safety: rt(
+        'Doors locked with a family access code, a compliant and inspected yard, regular evacuation drills, fully first-aid-certified staff and a background check for every adult in the building.',
+        'Regulatory ratios are respected at all times, including on outings, where they are deliberately reinforced. In case of any incident, even minor, you are informed the same day.',
       ),
     },
   })
@@ -503,6 +643,166 @@ async function run() {
         ),
       },
     },
+    {
+      category: 'admission',
+      audience: 'public',
+      fr: {
+        question: 'Combien de temps dure l’attente pour une place ?',
+        answer: rt(
+          'Impossible de le promettre : tout dépend des départs et de l’âge de votre enfant. La pouponnière est la plus demandée. Inscrivez-vous tôt sur La Place 0-5 et gardez vos choix à jour — nous contactons les familles dès qu’une place s’ouvre.',
+        ),
+      },
+      en: {
+        question: 'How long is the wait for a spot?',
+        answer: rt(
+          'Impossible to promise: it depends on departures and your child’s age. The infant room is in highest demand. Register early on La Place 0-5 and keep your choices up to date — we contact families as soon as a spot opens.',
+        ),
+      },
+    },
+    {
+      category: 'admission',
+      audience: 'public',
+      fr: {
+        question: 'Comment se déroule la première journée ?',
+        answer: rt(
+          'En douceur, et jamais seule : la première journée fait partie d’une intégration progressive planifiée avec vous, avec des présences courtes qui s’allongent au rythme de votre enfant.',
+        ),
+      },
+      en: {
+        question: 'What does the first day look like?',
+        answer: rt(
+          'Gentle, and never alone: the first day is part of a gradual integration planned with you, with short visits that lengthen at your child’s pace.',
+        ),
+      },
+    },
+    {
+      category: 'quotidien',
+      audience: 'public',
+      fr: {
+        question: 'Mon enfant fait-il la sieste tous les jours ?',
+        answer: rt(
+          'Une période de repos suit le dîner pour tous les groupes. Les enfants qui ne dorment plus se reposent avec des livres après 45 minutes — le sommeil n’est jamais forcé. Les poupons dorment selon leur propre horaire.',
+        ),
+      },
+      en: {
+        question: 'Does my child nap every day?',
+        answer: rt(
+          'A rest period follows lunch for every group. Children who no longer sleep rest with books after 45 minutes — sleep is never forced. Infants sleep on their own schedule.',
+        ),
+      },
+    },
+    {
+      category: 'quotidien',
+      audience: 'public',
+      fr: {
+        question: 'Les enfants jouent-ils dehors en hiver ?',
+        answer: rt(
+          'Oui, presque tous les jours ! Seul le froid extrême (−25 °C et moins avec le vent) nous garde à l’intérieur. Un habit de neige complet et des mitaines de rechange sont indispensables.',
+        ),
+      },
+      en: {
+        question: 'Do children play outside in winter?',
+        answer: rt(
+          'Yes, nearly every day! Only extreme cold (−25 °C and below with wind chill) keeps us inside. A full snowsuit and spare mittens are essential.',
+        ),
+      },
+    },
+    {
+      category: 'sante',
+      audience: 'public',
+      fr: {
+        question: 'Donnez-vous des médicaments aux enfants ?',
+        answer: rt(
+          'Seulement sur ordonnance, avec autorisation écrite signée, dans le contenant d’origine identifié. Chaque administration est consignée dans un registre. L’acétaminophène suit le protocole du ministère.',
+        ),
+      },
+      en: {
+        question: 'Do you give children medication?',
+        answer: rt(
+          'Prescription only, with signed written authorization, in the original labelled container. Every administration is logged. Acetaminophen follows the ministry protocol.',
+        ),
+      },
+    },
+    {
+      category: 'sante',
+      audience: 'public',
+      fr: {
+        question: 'L’équipe est-elle formée en premiers soins ?',
+        answer: rt(
+          'Oui — toute l’équipe détient une certification de secourisme adaptée à la petite enfance (RCR et étouffement compris), renouvelée aux trois ans, et est formée à l’administration de l’auto-injecteur.',
+        ),
+      },
+      en: {
+        question: 'Is the team trained in first aid?',
+        answer: rt(
+          'Yes — the whole team holds early-childhood-adapted first-aid certification (including CPR and choking response), renewed every three years, and is trained in auto-injector use.',
+        ),
+      },
+    },
+    {
+      category: 'alimentation',
+      audience: 'public',
+      fr: {
+        question: 'Le CPE est-il sans arachides ?',
+        answer: rt(
+          'Oui, entièrement sans arachides et sans noix. C’est pourquoi aucune nourriture de la maison n’entre au CPE — y compris les gâteaux d’anniversaire : la cuisine prépare une surprise sécuritaire pour chaque fête.',
+        ),
+      },
+      en: {
+        question: 'Is the CPE peanut-free?',
+        answer: rt(
+          'Yes, entirely peanut- and nut-free. That is why no food from home enters the CPE — including birthday cakes: the kitchen prepares a safe surprise for every celebration.',
+        ),
+      },
+    },
+    {
+      category: 'alimentation',
+      audience: 'public',
+      fr: {
+        question: 'Où trouver le menu ?',
+        answer: rt(
+          'Sur la page Cuisine et nutrition du site, affiché à l’entrée du CPE, et en PDF téléchargeable dans la section Documents du portail parents. La rotation change au fil des saisons.',
+        ),
+      },
+      en: {
+        question: 'Where can I find the menu?',
+        answer: rt(
+          'On the website’s Kitchen & nutrition page, posted at the CPE entrance, and as a downloadable PDF in the portal’s Documents section. The rotation changes with the seasons.',
+        ),
+      },
+    },
+    {
+      category: 'general',
+      audience: 'public',
+      fr: {
+        question: 'Comment fonctionne le portail parents ?',
+        answer: rt(
+          'Chaque famille inscrite reçoit un accès créé par l’administration (aucune inscription libre). Vous vous connectez par mot de passe ou par lien magique reçu par courriel, et vous y trouvez activités, annonces, photos et documents propres aux groupes de votre enfant.',
+        ),
+      },
+      en: {
+        question: 'How does the parent portal work?',
+        answer: rt(
+          'Every enrolled family receives access created by the administration (no self-registration). You sign in with a password or an emailed magic link, and find activities, announcements, photos and documents specific to your child’s groups.',
+        ),
+      },
+    },
+    {
+      category: 'general',
+      audience: 'public',
+      fr: {
+        question: 'Le CPE embauche-t-il ?',
+        answer: rt(
+          'Les postes ouverts sont affichés sur la page Carrières, où vous pouvez postuler en ligne avec votre CV — les candidatures spontanées sont toujours bienvenues.',
+        ),
+      },
+      en: {
+        question: 'Is the CPE hiring?',
+        answer: rt(
+          'Open positions are posted on the Careers page, where you can apply online with your CV — spontaneous applications are always welcome.',
+        ),
+      },
+    },
   ] as const
 
   for (const [i, f] of faqs.entries()) {
@@ -551,250 +851,14 @@ async function run() {
     kbCategoryIds[c.fr] = doc.id as number
   }
 
-  const kbArticles = [
-    {
-      category: 'Inscription',
-      audience: 'public',
-      fr: {
-        question: 'Comment inscrire un deuxième enfant ?',
-        answer: rt(
-          'Inscrivez votre enfant sur le guichet unique La Place 0-5 en sélectionnant notre CPE. Les fratries des enfants déjà inscrits ont priorité selon notre politique d’admission — mentionnez-le à la direction pour que votre dossier soit repéré.',
-        ),
-        keywords: ['fratrie', 'deuxième enfant', 'la place 0-5', 'priorité'],
-      },
-      en: {
-        question: 'How do I register a second child?',
-        answer: rt(
-          'Register your child on the single waiting list La Place 0-5 and select our CPE. Siblings of enrolled children have priority under our admission policy — tell the direction so your file is flagged.',
-        ),
-        keywords: ['sibling', 'second child', 'la place 0-5', 'priority'],
-      },
-    },
-    {
-      category: 'Frais et paiements',
-      audience: 'public',
-      fr: {
-        question: 'Quand recevrai-je mon relevé fiscal ?',
-        answer: rt(
-          'Le relevé 24 (frais de garde) est remis à chaque famille au plus tard le dernier jour de février pour l’année précédente. Il est déposé dans la section Documents du portail et envoyé par courriel.',
-        ),
-        keywords: ['relevé 24', 'impôts', 'reçu', 'fiscal'],
-      },
-      en: {
-        question: 'When will I receive my tax receipt?',
-        answer: rt(
-          'The Relevé 24 (childcare expenses) is issued to every family by the last day of February for the previous year. It is posted in the Documents section of the portal and sent by email.',
-        ),
-        keywords: ['releve 24', 'taxes', 'receipt', 'tax slip'],
-      },
-    },
-    {
-      category: 'Frais et paiements',
-      audience: 'public',
-      fr: {
-        question: 'Comment fonctionne le paiement de la contribution réduite ?',
-        answer: rt(
-          'Le tarif quotidien est fixé par le gouvernement du Québec et couvre les repas, les collations et les activités régulières. Le paiement se fait par prélèvement ou par chèque, selon l’entente prise avec l’administration.',
-        ),
-        keywords: ['tarif', 'prix', 'paiement', 'contribution réduite'],
-      },
-      en: {
-        question: 'How does the reduced-contribution payment work?',
-        answer: rt(
-          'The daily rate is set by the Québec government and covers meals, snacks and regular activities. Payment is by pre-authorized debit or cheque, as arranged with the administration.',
-        ),
-        keywords: ['rate', 'price', 'payment', 'reduced contribution'],
-      },
-    },
-    {
-      category: 'Repas',
-      audience: 'public',
-      fr: {
-        question: 'Que faire si mon enfant a une allergie alimentaire ?',
-        answer: rt(
-          'Informez la direction dès que possible : l’allergie est consignée au dossier de l’enfant, affichée en cuisine et communiquée à toute l’équipe. Les menus sont adaptés en conséquence. Le CPE est un milieu sans arachides ni noix.',
-        ),
-        keywords: ['allergie', 'intolérance', 'arachides', 'noix', 'épipen'],
-      },
-      en: {
-        question: 'What if my child has a food allergy?',
-        answer: rt(
-          'Tell the direction as soon as possible: the allergy is recorded in your child’s file, posted in the kitchen and shared with the whole team. Menus are adapted accordingly. The CPE is a peanut- and nut-free environment.',
-        ),
-        keywords: ['allergy', 'intolerance', 'peanut', 'nuts', 'epipen'],
-      },
-    },
-    {
-      category: 'Repas',
-      audience: 'public',
-      fr: {
-        question: 'Où trouver le menu de la semaine ?',
-        answer: rt(
-          'Le menu est affiché à l’entrée du CPE et déposé chaque mois dans la section Documents du portail parents. Les menus suivent une rotation de quatre semaines, adaptée aux saisons.',
-        ),
-        keywords: ['menu', 'repas', 'collation', 'semaine'],
-      },
-      en: {
-        question: 'Where can I find this week’s menu?',
-        answer: rt(
-          'The menu is posted at the CPE entrance and uploaded monthly to the Documents section of the parent portal. Menus follow a four-week rotation adapted to the seasons.',
-        ),
-        keywords: ['menu', 'meals', 'snack', 'week'],
-      },
-    },
-    {
-      category: 'Horaire',
-      audience: 'public',
-      fr: {
-        question: 'Quelles sont les heures d’ouverture ?',
-        answer: rt(
-          'Le CPE est ouvert du lundi au vendredi, de 7 h à 18 h. Les arrivées se font idéalement avant 9 h 30 pour ne pas interrompre les activités du groupe. Après 18 h, des frais de retard s’appliquent selon la politique en vigueur.',
-        ),
-        keywords: ['heures', 'ouverture', 'fermeture', 'retard'],
-      },
-      en: {
-        question: 'What are the opening hours?',
-        answer: rt(
-          'The CPE is open Monday to Friday, 7 a.m. to 6 p.m. Ideally arrive before 9:30 a.m. so group activities are not interrupted. After 6 p.m., late fees apply as per the current policy.',
-        ),
-        keywords: ['hours', 'opening', 'closing', 'late'],
-      },
-    },
-    {
-      category: 'Santé',
-      audience: 'public',
-      fr: {
-        question: 'Mon enfant fait de la fièvre : puis-je l’amener au CPE ?',
-        answer: rt(
-          'Non — un enfant fiévreux (38,5 °C et plus) doit rester à la maison jusqu’à 24 heures sans fièvre, sans médicament. Si la fièvre apparaît au CPE, nous vous appelons pour que l’enfant soit récupéré dans l’heure.',
-        ),
-        keywords: ['fièvre', 'malade', 'maladie', 'température'],
-      },
-      en: {
-        question: 'My child has a fever — can they come to the CPE?',
-        answer: rt(
-          'No — a child with a fever (38.5 °C or higher) must stay home until 24 hours fever-free without medication. If a fever starts at the CPE, we call you and the child must be picked up within the hour.',
-        ),
-        keywords: ['fever', 'sick', 'illness', 'temperature'],
-      },
-    },
-    {
-      category: 'Santé',
-      audience: 'public',
-      fr: {
-        question: 'Pouvez-vous administrer un médicament à mon enfant ?',
-        answer: rt(
-          'Oui, sur ordonnance seulement et avec une autorisation écrite signée. Le médicament doit être dans son contenant d’origine, étiqueté au nom de l’enfant. L’acétaminophène est administré selon le protocole du ministère.',
-        ),
-        keywords: ['médicament', 'ordonnance', 'acétaminophène', 'protocole'],
-      },
-      en: {
-        question: 'Can you give my child medication?',
-        answer: rt(
-          'Yes, prescription only and with signed written authorization. The medication must be in its original container, labelled with the child’s name. Acetaminophen is administered under the ministry protocol.',
-        ),
-        keywords: ['medication', 'prescription', 'acetaminophen', 'protocol'],
-      },
-    },
-    {
-      category: 'Politiques',
-      audience: 'portal',
-      fr: {
-        question: 'Comment signaler une absence ou un retard ?',
-        answer: rt(
-          'Téléphonez-nous ou écrivez-nous avant 9 h le matin même. Pour une absence prolongée (vacances, maladie), prévenez l’éducatrice de votre groupe dès que possible.',
-        ),
-        keywords: ['absence', 'retard', 'vacances', 'signaler'],
-      },
-      en: {
-        question: 'How do I report an absence or lateness?',
-        answer: rt(
-          'Call or email us before 9 a.m. that morning. For a longer absence (vacation, illness), let your group’s educator know as soon as possible.',
-        ),
-        keywords: ['absence', 'late', 'vacation', 'report'],
-      },
-    },
-    {
-      category: 'Politiques',
-      audience: 'public',
-      fr: {
-        question: 'Quoi mettre dans le sac de mon enfant ?',
-        answer: rt(
-          'Chaque jour : vêtements de rechange identifiés, vêtements adaptés à la météo (nous sortons tous les jours), doudou pour la sieste et, pour les poupons, couches et crème. Tout doit être identifié au nom de l’enfant.',
-        ),
-        keywords: ['sac', 'vêtements', 'rechange', 'doudou', 'couches'],
-      },
-      en: {
-        question: 'What should I pack in my child’s bag?',
-        answer: rt(
-          'Every day: labelled spare clothes, weather-appropriate clothing (we go outside daily), a comfort blanket for nap time and, for infants, diapers and cream. Everything must be labelled with the child’s name.',
-        ),
-        keywords: ['bag', 'clothes', 'spare', 'blanket', 'diapers'],
-      },
-    },
-    {
-      category: 'Activités',
-      audience: 'public',
-      fr: {
-        question: 'Les enfants sortent-ils dehors tous les jours ?',
-        answer: rt(
-          'Oui, beau temps comme temps froid — deux sorties par jour dans la cour, sauf en cas de conditions extrêmes (froid sous −25 °C avec le vent, smog, orage). Habillez votre enfant en conséquence.',
-        ),
-        keywords: ['dehors', 'extérieur', 'cour', 'hiver', 'sortie'],
-      },
-      en: {
-        question: 'Do the children go outside every day?',
-        answer: rt(
-          'Yes, in fair weather and cold alike — two outdoor periods a day in the yard, except in extreme conditions (below −25 °C with wind chill, smog, thunderstorms). Dress your child accordingly.',
-        ),
-        keywords: ['outside', 'outdoor', 'yard', 'winter', 'outing'],
-      },
-    },
-    {
-      category: 'Événements',
-      audience: 'public',
-      fr: {
-        question: 'Comment être informé des événements et sorties à venir ?',
-        answer: rt(
-          'Les événements sont publiés dans la section Annonces du portail, et les sorties propres à votre groupe apparaissent dans Activités. Les annonces importantes sont aussi envoyées par courriel.',
-        ),
-        keywords: ['événement', 'sortie', 'calendrier', 'fête'],
-      },
-      en: {
-        question: 'How do I stay informed about upcoming events and outings?',
-        answer: rt(
-          'Events are published in the Announcements section of the portal, and your group’s outings appear under Activities. Important announcements are also sent by email.',
-        ),
-        keywords: ['event', 'outing', 'calendar', 'party'],
-      },
-    },
-    {
-      category: 'Informations générales',
-      audience: 'portal',
-      fr: {
-        question: 'Comment modifier mes coordonnées ou personnes autorisées ?',
-        answer: rt(
-          'Écrivez à l’administration ou passez au bureau : la mise à jour des numéros d’urgence et des personnes autorisées à récupérer votre enfant se fait le jour même. Une pièce d’identité est exigée pour toute personne inconnue de l’équipe.',
-        ),
-        keywords: ['coordonnées', 'urgence', 'personnes autorisées', 'téléphone'],
-      },
-      en: {
-        question: 'How do I update my contact details or authorized pick-up people?',
-        answer: rt(
-          'Write to the administration or stop by the office: emergency numbers and authorized pick-up people are updated the same day. Photo ID is required for anyone the team does not know.',
-        ),
-        keywords: ['contact', 'emergency', 'authorized pickup', 'phone'],
-      },
-    },
-  ] as const
-
-  for (const a of kbArticles) {
+  console.log(`Seeding ${kbSeedArticles.length} knowledge-base articles…`)
+  for (const a of kbSeedArticles) {
     const doc = await payload.create({
       collection: 'kb-articles',
       locale: 'fr',
       data: {
         question: a.fr.question,
-        answer: a.fr.answer,
+        answer: rt(...a.fr.answer),
         keywords: a.fr.keywords.map((term) => ({ term })),
         category: kbCategoryIds[a.category],
         audience: a.audience,
@@ -809,20 +873,27 @@ async function run() {
       locale: 'en',
       data: {
         question: a.en.question,
-        answer: a.en.answer,
+        answer: rt(...a.en.answer),
         keywords: a.en.keywords.map((term) => ({ term })),
         _status: 'published',
       },
     })
   }
 
-  // ---- Closures ----
+  // ---- Closures (full demo year ahead) ----
   const year = new Date().getFullYear()
   const closures = [
     { fr: 'Journée pédagogique', en: 'Pedagogical day', start: `${year}-08-21` },
     { fr: 'Fête du Travail', en: 'Labour Day', start: `${year}-09-07` },
     { fr: 'Action de grâce', en: 'Thanksgiving', start: `${year}-10-12` },
+    { fr: 'Journée pédagogique', en: 'Pedagogical day', start: `${year}-11-13` },
     { fr: 'Congé des Fêtes', en: 'Holiday break', start: `${year}-12-24`, end: `${year + 1}-01-04` },
+    { fr: 'Journée pédagogique', en: 'Pedagogical day', start: `${year + 1}-02-12` },
+    { fr: 'Vendredi saint', en: 'Good Friday', start: `${year + 1}-04-02` },
+    { fr: 'Lundi de Pâques', en: 'Easter Monday', start: `${year + 1}-04-05` },
+    { fr: 'Journée nationale des patriotes', en: 'National Patriots’ Day', start: `${year + 1}-05-24` },
+    { fr: 'Fête nationale du Québec', en: 'Québec National Holiday', start: `${year + 1}-06-24` },
+    { fr: 'Fête du Canada', en: 'Canada Day', start: `${year + 1}-07-01` },
   ]
   for (const c of closures) {
     const doc = await payload.create({
@@ -834,33 +905,130 @@ async function run() {
   }
 
   // ---- Team (fictional, consent flagged for demo) ----
-  const team = [
+  console.log('Seeding team…')
+  type TeamMember = {
+    name: string
+    department: 'administration' | 'educators' | 'kitchen' | 'specialists'
+    fr: { jobTitle: string; bio: string }
+    en: { jobTitle: string; bio: string }
+  }
+  const team: TeamMember[] = [
+    // Administration
     {
       name: 'Marie-Claude Demers (démo)',
-      fr: { jobTitle: 'Directrice générale', bio: 'Éducatrice de formation, elle veille depuis quinze ans à ce que chaque famille se sente chez elle. (Profil fictif de démonstration.)' },
-      en: { jobTitle: 'Executive Director', bio: 'An educator by training, she has spent fifteen years making sure every family feels at home. (Fictional demonstration profile.)' },
+      department: 'administration',
+      fr: { jobTitle: 'Directrice générale', bio: 'Éducatrice de formation, elle veille depuis quinze ans à ce que chaque famille se sente chez elle. Elle connaît le prénom de chaque enfant — et celui de chaque doudou. (Profil fictif de démonstration.)' },
+      en: { jobTitle: 'Executive Director', bio: 'An educator by training, she has spent fifteen years making sure every family feels at home. She knows every child’s name — and every comfort blanket’s too. (Fictional demonstration profile.)' },
     },
     {
       name: 'Amina Berrada (démo)',
-      fr: { jobTitle: 'Directrice adjointe', bio: 'Elle orchestre le quotidien du CPE — horaires, remplacements et mille petites attentions. (Profil fictif de démonstration.)' },
-      en: { jobTitle: 'Assistant Director', bio: 'She orchestrates the CPE’s daily life — schedules, substitutions, and a thousand small kindnesses. (Fictional demonstration profile.)' },
+      department: 'administration',
+      fr: { jobTitle: 'Directrice adjointe', bio: 'Elle orchestre le quotidien du CPE — horaires, remplacements et mille petites attentions. Rien ne lui échappe, surtout pas un anniversaire. (Profil fictif de démonstration.)' },
+      en: { jobTitle: 'Assistant Director', bio: 'She orchestrates the CPE’s daily life — schedules, substitutions, and a thousand small kindnesses. Nothing escapes her, least of all a birthday. (Fictional demonstration profile.)' },
     },
+    {
+      name: 'Sophie Lachance (démo)',
+      department: 'administration',
+      fr: { jobTitle: 'Agente de soutien administratif', bio: 'Première voix au téléphone et premier sourire au bureau : dossiers, factures et relevés passent entre ses mains expertes. (Profil fictif de démonstration.)' },
+      en: { jobTitle: 'Administrative Support Officer', bio: 'First voice on the phone and first smile at the office: files, invoices and statements all pass through her expert hands. (Fictional demonstration profile.)' },
+    },
+    // Educators
     {
       name: 'Julie Tremblay-Roy (démo)',
-      fr: { jobTitle: 'Éducatrice — poupons', bio: 'Spécialiste des tout-petits, elle transforme chaque routine en moment de complicité. (Profil fictif de démonstration.)' },
-      en: { jobTitle: 'Educator — infants', bio: 'A specialist of the very young, she turns every routine into a moment of connection. (Fictional demonstration profile.)' },
+      department: 'educators',
+      fr: { jobTitle: 'Éducatrice — Les Poussins', bio: 'Spécialiste des tout-petits depuis douze ans, elle transforme chaque routine en moment de complicité — et endort les poupons les plus résistants. (Profil fictif de démonstration.)' },
+      en: { jobTitle: 'Educator — Les Poussins', bio: 'A specialist of the very young for twelve years, she turns every routine into a moment of connection — and settles the most nap-resistant infants. (Fictional demonstration profile.)' },
     },
     {
+      name: 'Camille Fortin (démo)',
+      department: 'educators',
+      fr: { jobTitle: 'Éducatrice — Les Poussins', bio: 'Douce et patiente, elle chante toute la journée — les poupons ont chacun leur chanson d’accueil personnalisée. (Profil fictif de démonstration.)' },
+      en: { jobTitle: 'Educator — Les Poussins', bio: 'Gentle and patient, she sings all day long — each infant has their own personalized welcome song. (Fictional demonstration profile.)' },
+    },
+    {
+      name: 'Noémie Bélanger (démo)',
+      department: 'educators',
+      fr: { jobTitle: 'Éducatrice — Les Lapinots', bio: 'Reine des bacs sensoriels et des parcours à quatre pattes, elle accompagne les premiers pas et les premiers mots avec un enthousiasme contagieux. (Profil fictif de démonstration.)' },
+      en: { jobTitle: 'Educator — Les Lapinots', bio: 'Queen of sensory bins and crawling courses, she cheers on first steps and first words with contagious enthusiasm. (Fictional demonstration profile.)' },
+    },
+    {
+      name: 'Fatima El Amrani (démo)',
+      department: 'educators',
+      fr: { jobTitle: 'Éducatrice — Les Lapinots', bio: 'Passionnée de littérature jeunesse, elle a monté le coin lecture le plus douillet du CPE. Ses marionnettes sont célèbres. (Profil fictif de démonstration.)' },
+      en: { jobTitle: 'Educator — Les Lapinots', bio: 'Passionate about children’s literature, she built the coziest reading corner in the CPE. Her puppets are famous. (Fictional demonstration profile.)' },
+    },
+    {
+      name: 'Alexandra Petrov (démo)',
+      department: 'educators',
+      fr: { jobTitle: 'Éducatrice — Les Papillons', bio: 'Artiste dans l’âme, elle fait peindre, coller et modeler tout ce qui passe. Les murs du local des Papillons sont sa galerie préférée. (Profil fictif de démonstration.)' },
+      en: { jobTitle: 'Educator — Les Papillons', bio: 'An artist at heart, she gets everything painted, glued and sculpted. The Papillons’ walls are her favourite gallery. (Fictional demonstration profile.)' },
+    },
+    {
+      name: 'Émilie Gagnon-Côté (démo)',
+      department: 'educators',
+      fr: { jobTitle: 'Éducatrice — Les Renardeaux', bio: 'Toujours dehors, beau temps mauvais temps : ses expéditions « exploration du quartier » sont légendaires chez les 3-4 ans. (Profil fictif de démonstration.)' },
+      en: { jobTitle: 'Educator — Les Renardeaux', bio: 'Always outside, rain or shine: her neighbourhood-exploration expeditions are legendary among the 3-4s. (Fictional demonstration profile.)' },
+    },
+    {
+      name: 'Marc-Antoine Dubois (démo)',
+      department: 'educators',
+      fr: { jobTitle: 'Éducateur — Les Explorateurs', bio: 'Ancien animateur de camps, il prépare les futurs écoliers avec des projets fous : fusées en carton, restaurants imaginaires et grands débats de 5 ans. (Profil fictif de démonstration.)' },
+      en: { jobTitle: 'Educator — Les Explorateurs', bio: 'A former camp counsellor, he preps future schoolkids with wild projects: cardboard rockets, imaginary restaurants and great five-year-old debates. (Fictional demonstration profile.)' },
+    },
+    {
+      name: 'Rosalie Bergeron (démo)',
+      department: 'educators',
+      fr: { jobTitle: 'Éducatrice volante', bio: 'Elle connaît tous les groupes et tous les enfants : c’est elle qui assure la continuité pendant les pauses, les rencontres et les imprévus. (Profil fictif de démonstration.)' },
+      en: { jobTitle: 'Floating Educator', bio: 'She knows every group and every child: she is the continuity during breaks, meetings and the unexpected. (Fictional demonstration profile.)' },
+    },
+    // Kitchen
+    {
       name: 'Gabriel Sansregret (démo)',
-      fr: { jobTitle: 'Cuisinier', bio: 'Derrière ses potages et ses muffins se cache la personne la plus populaire du CPE. (Profil fictif de démonstration.)' },
-      en: { jobTitle: 'Cook', bio: 'Behind his soups and muffins hides the most popular person at the CPE. (Fictional demonstration profile.)' },
+      department: 'kitchen',
+      fr: { jobTitle: 'Cuisinier', bio: 'Derrière ses potages et ses muffins se cache la personne la plus populaire du CPE. Son velouté de courge convertit même les plus sceptiques. (Profil fictif de démonstration.)' },
+      en: { jobTitle: 'Cook', bio: 'Behind his soups and muffins hides the most popular person at the CPE. His squash soup converts even the sceptics. (Fictional demonstration profile.)' },
+    },
+    {
+      name: 'Linh Pham (démo)',
+      department: 'kitchen',
+      fr: { jobTitle: 'Aide-cuisinière', bio: 'Gardienne des fiches d’allergies et des collations parfaites, elle connaît par cœur les goûts (et les dégoûts) de chaque groupe. (Profil fictif de démonstration.)' },
+      en: { jobTitle: 'Kitchen Assistant', bio: 'Guardian of the allergy sheets and perfect snacks, she knows every group’s tastes (and distastes) by heart. (Fictional demonstration profile.)' },
+    },
+    // Specialists & support
+    {
+      name: 'Véronique Simard (démo)',
+      department: 'specialists',
+      fr: { jobTitle: 'Éducatrice spécialisée — soutien à l’inclusion', bio: 'Elle accompagne les enfants qui ont besoin d’un coup de pouce supplémentaire et fait le pont avec les professionnels externes. Sa règle d’or : chaque enfant a sa place. (Profil fictif de démonstration.)' },
+      en: { jobTitle: 'Special-Needs Educator — Inclusion Support', bio: 'She supports children who need an extra hand and bridges with outside professionals. Her golden rule: every child belongs. (Fictional demonstration profile.)' },
+    },
+    {
+      name: 'Nadia Kaddouri (démo)',
+      department: 'specialists',
+      fr: { jobTitle: 'Conseillère pédagogique', bio: 'Elle nourrit la réflexion de l’équipe : observation des groupes, coaching et formation continue. C’est elle qui garde le programme éducatif bien vivant. (Profil fictif de démonstration.)' },
+      en: { jobTitle: 'Pedagogical Advisor', bio: 'She feeds the team’s practice: group observation, coaching and continuing education. She keeps the educational program alive and well. (Fictional demonstration profile.)' },
+    },
+    {
+      name: 'Denis Lavoie (démo)',
+      department: 'specialists',
+      fr: { jobTitle: 'Responsable de l’entretien', bio: 'Locaux impeccables, jouets désinfectés, cour sécuritaire : son travail discret est la base de tout le reste. Les enfants l’adorent — il répare aussi les tricycles. (Profil fictif de démonstration.)' },
+      en: { jobTitle: 'Maintenance Manager', bio: 'Spotless rooms, disinfected toys, a safe yard: his quiet work underpins everything else. The children adore him — he fixes tricycles too. (Fictional demonstration profile.)' },
     },
   ]
   for (const [i, m] of team.entries()) {
+    const photo = await uploadPortrait(payload, i, m.name)
     const doc = await payload.create({
       collection: 'staff-profiles',
       locale: 'fr',
-      data: { name: m.name, ...m.fr, consent: true, order: i, demoSeed: true, _status: 'published' },
+      data: {
+        name: m.name,
+        ...m.fr,
+        department: m.department,
+        photo,
+        consent: true,
+        order: i,
+        demoSeed: true,
+        _status: 'published',
+      },
     })
     await payload.update({ collection: 'staff-profiles', id: doc.id, locale: 'en', data: { ...m.en, _status: 'published' } })
   }
@@ -870,15 +1038,44 @@ async function run() {
     {
       schedule: 'full' as const,
       fr: {
-        title: 'Éducatrice ou éducateur qualifié·e',
+        title: 'Éducatrice ou éducateur qualifié·e — groupe 3-4 ans',
         description: rt(
-          'Poste permanent à temps plein auprès du groupe des 3-4 ans. Nous cherchons une personne qualifiée (DEC ou AEC en éducation à l’enfance), douce et fiable. (Affichage de démonstration.)',
+          'Poste permanent à temps plein (36 h/semaine) auprès des Renardeaux, notre groupe de 3-4 ans débordant d’énergie. Vous rejoignez une équipe stable, appuyée par une conseillère pédagogique, dans un milieu où la qualité passe avant la cadence. (Affichage de démonstration.)',
+          'Entrée en poste dès que possible. Salaire selon l’échelle du réseau des CPE, régime de retraite et assurances collectives.',
+        ),
+        qualifications: rt(
+          'DEC en techniques d’éducation à l’enfance ou AEC reconnue avec expérience ; cours de secourisme adapté à la petite enfance à jour ; absence d’empêchement vérifiée. La douceur, la fiabilité et le plaisir sincère d’être avec les enfants comptent autant que le diplôme.',
         ),
       },
       en: {
-        title: 'Qualified educator',
+        title: 'Qualified educator — 3-4 year-old group',
         description: rt(
-          'Permanent full-time position with the 3–4 year-old group. We are looking for a qualified person (DEC or AEC in early childhood education), gentle and reliable. (Demonstration posting.)',
+          'Permanent full-time position (36 h/week) with the Renardeaux, our energy-filled 3-4 group. You join a stable team, supported by a pedagogical advisor, in a place where quality comes before speed. (Demonstration posting.)',
+          'Start as soon as possible. Salary on the CPE network scale, pension plan and group insurance.',
+        ),
+        qualifications: rt(
+          'DEC in early childhood education or recognized AEC with experience; up-to-date early-childhood first-aid course; verified background check. Gentleness, reliability and genuine joy in being with children matter as much as the diploma.',
+        ),
+      },
+    },
+    {
+      schedule: 'part' as const,
+      fr: {
+        title: 'Aide-cuisinier·ère — temps partiel',
+        description: rt(
+          'De 9 h à 14 h, du lundi au vendredi, vous secondez notre cuisinier : préparation des collations, service des dîners, hygiène de la cuisine et gestion des fiches d’allergies. (Affichage de démonstration.)',
+        ),
+        qualifications: rt(
+          'Formation en hygiène et salubrité alimentaire (MAPAQ) ou volonté de l’obtenir rapidement ; expérience en cuisine de collectivité un atout ; rigueur absolue avec les allergènes.',
+        ),
+      },
+      en: {
+        title: 'Kitchen assistant — part-time',
+        description: rt(
+          'From 9 a.m. to 2 p.m., Monday to Friday, you support our cook: snack preparation, lunch service, kitchen hygiene and allergy-sheet management. (Demonstration posting.)',
+        ),
+        qualifications: rt(
+          'MAPAQ food-hygiene training or willingness to obtain it quickly; institutional-kitchen experience an asset; absolute rigour with allergens.',
         ),
       },
     },
@@ -886,14 +1083,46 @@ async function run() {
       schedule: 'sub' as const,
       fr: {
         title: 'Éducatrice ou éducateur — banque de remplacement',
-        description: rt('Horaires variables selon vos disponibilités. Une belle porte d’entrée pour découvrir notre équipe. (Affichage de démonstration.)'),
+        description: rt(
+          'Horaires variables selon vos disponibilités, dans tous les groupes. Une belle porte d’entrée pour découvrir notre équipe — plusieurs de nos permanentes ont commencé ici. (Affichage de démonstration.)',
+        ),
+        qualifications: rt(
+          'Formation en éducation à l’enfance (complétée ou en cours) ; secourisme à jour ; disponibilité d’au moins deux jours par semaine appréciée.',
+        ),
       },
       en: {
         title: 'Educator — substitute bank',
-        description: rt('Variable hours based on your availability. A great way to get to know our team. (Demonstration posting.)'),
+        description: rt(
+          'Variable hours based on your availability, across all groups. A great way to get to know our team — several of our permanent educators started here. (Demonstration posting.)',
+        ),
+        qualifications: rt(
+          'Early-childhood-education training (completed or in progress); current first aid; availability of at least two days a week appreciated.',
+        ),
+      },
+    },
+    {
+      schedule: 'part' as const,
+      fr: {
+        title: 'Éducatrice spécialisée — soutien à l’inclusion (remplacement de congé)',
+        description: rt(
+          'Remplacement d’un congé parental (3 jours/semaine, un an) : accompagnement individualisé d’enfants à besoins particuliers, collaboration avec les familles et les partenaires externes (CLSC, ergothérapie, orthophonie). (Affichage de démonstration.)',
+        ),
+        qualifications: rt(
+          'DEC en techniques d’éducation spécialisée ou l’équivalent ; expérience auprès des 0-5 ans ; connaissance du réseau de la santé et des services sociaux un atout.',
+        ),
+      },
+      en: {
+        title: 'Special-needs educator — inclusion support (leave replacement)',
+        description: rt(
+          'Parental-leave replacement (3 days/week, one year): individualized support for children with special needs, collaboration with families and outside partners (CLSC, occupational therapy, speech therapy). (Demonstration posting.)',
+        ),
+        qualifications: rt(
+          'DEC in special-care counselling or equivalent; experience with ages 0-5; knowledge of the health and social services network an asset.',
+        ),
       },
     },
   ]
+  const jobIds: number[] = []
   for (const j of jobs) {
     const doc = await payload.create({
       collection: 'job-openings',
@@ -901,6 +1130,42 @@ async function run() {
       data: { ...j.fr, schedule: j.schedule, demoSeed: true, _status: 'published' },
     })
     await payload.update({ collection: 'job-openings', id: doc.id, locale: 'en', data: { ...j.en, _status: 'published' } })
+    jobIds.push(doc.id as number)
+  }
+
+  // ---- Demo job applications (what the director sees when someone applies) ----
+  const applicationDefs = [
+    {
+      name: 'Laurence Bédard (démo)',
+      email: 'laurence.bedard@exemple-demo.example',
+      phone: '418 555-0147 (démo)',
+      jobOpening: jobIds[0],
+      message:
+        'Bonjour, éducatrice qualifiée (DEC 2019) avec cinq ans d’expérience en CPE, je serais ravie de rencontrer votre équipe pour le poste auprès des 3-4 ans. (Candidature fictive de démonstration.)',
+    },
+    {
+      name: 'Karim Ouellet (démo)',
+      email: 'karim.ouellet@exemple-demo.example',
+      phone: undefined,
+      jobOpening: undefined, // spontaneous application
+      message:
+        'Étudiant en techniques d’éducation à l’enfance (2e année), disponible les lundis et vendredis pour des remplacements. (Candidature fictive de démonstration.)',
+    },
+  ]
+  for (const a of applicationDefs) {
+    const cv = makeDemoPdf(`CV — ${a.name}`, ['Curriculum vitae fictif de demonstration.'])
+    await payload.create({
+      collection: 'job-applications',
+      data: {
+        name: a.name,
+        email: a.email,
+        phone: a.phone,
+        message: a.message,
+        jobOpening: a.jobOpening,
+        demoSeed: true,
+      },
+      file: { data: cv, mimetype: 'application/pdf', name: `cv-demo-${a.name.split(' ')[0].toLowerCase()}.pdf`, size: cv.length },
+    })
   }
 
   // ---- Activity illustrations ----
@@ -915,6 +1180,20 @@ async function run() {
     histoires: await uploadIllustration(payload, 'histoires', 'Illustration : l’heure du conte', 'Illustration: story time'),
     motricite: await uploadIllustration(payload, 'motricite', 'Illustration : parcours de motricité', 'Illustration: motor-skills course'),
     pique_nique: await uploadIllustration(payload, 'pique_nique', 'Illustration : pique-nique', 'Illustration: picnic'),
+    ferme: await uploadIllustration(payload, 'ferme', 'Illustration : visite à la ferme', 'Illustration: farm visit'),
+    pommes: await uploadIllustration(payload, 'pommes', 'Illustration : sortie au verger', 'Illustration: orchard outing'),
+    citrouilles: await uploadIllustration(payload, 'citrouilles', 'Illustration : fête des citrouilles', 'Illustration: pumpkin celebration'),
+    neige: await uploadIllustration(payload, 'neige', 'Illustration : plaisirs d’hiver', 'Illustration: winter fun'),
+    cabane: await uploadIllustration(payload, 'cabane', 'Illustration : cabane à sucre', 'Illustration: sugar shack'),
+    bricolage: await uploadIllustration(payload, 'bricolage', 'Illustration : atelier de bricolage', 'Illustration: craft workshop'),
+    sciences: await uploadIllustration(payload, 'sciences', 'Illustration : petites sciences', 'Illustration: little science'),
+    biblio: await uploadIllustration(payload, 'biblio', 'Illustration : sortie à la bibliothèque', 'Illustration: library outing'),
+    velo: await uploadIllustration(payload, 'velo', 'Illustration : journée vélos et trottinettes', 'Illustration: bike and scooter day'),
+    spectacle: await uploadIllustration(payload, 'spectacle', 'Illustration : spectacle des enfants', 'Illustration: children’s show'),
+    fete: await uploadIllustration(payload, 'fete', 'Illustration : fête au CPE', 'Illustration: party at the CPE'),
+    repas: await uploadIllustration(payload, 'repas', 'Illustration : assiette équilibrée', 'Illustration: balanced plate'),
+    soupe: await uploadIllustration(payload, 'soupe', 'Illustration : potage maison', 'Illustration: homemade soup'),
+    muffins: await uploadIllustration(payload, 'muffins', 'Illustration : muffins maison', 'Illustration: homemade muffins'),
   }
 
   // ---- Activities (mix of public showcase and portal-only) ----
@@ -1055,6 +1334,170 @@ async function run() {
         description: rt('Tunnels, hoops, beams and a soft trampoline: a giant course set up in the motor-skills room to move, climb and jump.'),
       },
     },
+    {
+      date: day(5),
+      visibility: 'portal',
+      image: img.biblio,
+      groups: [papillons, renardeaux],
+      fr: {
+        title: 'Sortie à la bibliothèque du quartier',
+        description: rt('Marche jusqu’à la bibliothèque pour l’heure du conte animée par la bibliothécaire, puis choix d’un livre à rapporter au local.'),
+        importantNote: 'Départ à 9 h 15 — merci d’arriver avant 9 h ce matin-là.',
+        checklist: [{ item: 'Chaussures de marche' }, { item: 'Chapeau' }],
+      },
+      en: {
+        title: 'Outing to the neighbourhood library',
+        description: rt('A walk to the library for story time with the librarian, then each child picks a book to bring back to the room.'),
+        importantNote: 'Departure at 9:15 — please arrive before 9 that morning.',
+        checklist: [{ item: 'Walking shoes' }, { item: 'Hat' }],
+      },
+    },
+    {
+      date: day(9),
+      visibility: 'portal',
+      image: img.sciences,
+      groups: [explorateurs],
+      fr: {
+        title: 'Petites sciences : volcans et potions',
+        description: rt('Bicarbonate, vinaigre et colorants : les Explorateurs font éruption ! Une matinée d’expériences pour apprendre à observer, prédire et s’émerveiller.'),
+        checklist: [{ item: 'Vêtements qui peuvent se salir' }],
+      },
+      en: {
+        title: 'Little science: volcanoes and potions',
+        description: rt('Baking soda, vinegar and food colouring: the Explorateurs erupt! A morning of experiments to practise observing, predicting and marvelling.'),
+        checklist: [{ item: 'Clothes that can get messy' }],
+      },
+    },
+    {
+      date: day(12),
+      visibility: 'public',
+      image: img.velo,
+      groups: [renardeaux, explorateurs],
+      fr: {
+        title: 'Journée vélos et trottinettes',
+        description: rt('La cour se transforme en circuit : draisiennes, tricycles et trottinettes du CPE, panneaux de signalisation rigolos et « permis de conduire » remis à la fin.'),
+        importantNote: 'Les vélos de la maison restent à la maison — le CPE fournit tout l’équipement, casques compris.',
+      },
+      en: {
+        title: 'Bike and scooter day',
+        description: rt('The yard becomes a circuit: CPE balance bikes, tricycles and scooters, silly road signs and a “driver’s licence” awarded at the end.'),
+        importantNote: 'Bikes from home stay home — the CPE provides all the equipment, helmets included.',
+      },
+    },
+    {
+      date: day(14),
+      visibility: 'portal',
+      image: img.bricolage,
+      groups: [lapinots],
+      fr: {
+        title: 'Bricolage : le mobile des papillons',
+        description: rt('Papier de soie, cartons colorés et beaucoup de colle : chaque Lapinot repartira avec son mobile à suspendre au-dessus du lit.'),
+        checklist: [{ item: 'Vêtements qui peuvent se salir' }],
+      },
+      en: {
+        title: 'Craft: the butterfly mobile',
+        description: rt('Tissue paper, coloured cardboard and lots of glue: every Lapinot will leave with a mobile to hang above their bed.'),
+        checklist: [{ item: 'Clothes that can get messy' }],
+      },
+    },
+    {
+      date: day(19),
+      visibility: 'public',
+      image: img.ferme,
+      groups: [poussins, lapinots, papillons, renardeaux, explorateurs],
+      fr: {
+        title: 'La petite ferme mobile en visite',
+        description: rt('Lapins, chèvres naines, poules et un poney très patient s’installent dans la cour pour la journée. Chaque groupe aura son moment de visite, adapté à son âge.'),
+        importantNote: 'Lavage des mains obligatoire après chaque contact avec les animaux — l’équipe y veille.',
+      },
+      en: {
+        title: 'The little mobile farm visits',
+        description: rt('Rabbits, dwarf goats, hens and a very patient pony settle into the yard for the day. Each group gets its own age-appropriate visit slot.'),
+        importantNote: 'Mandatory handwashing after every animal contact — the team makes sure of it.',
+      },
+    },
+    {
+      date: day(24),
+      visibility: 'public',
+      image: img.fete,
+      groups: [poussins, lapinots, papillons, renardeaux, explorateurs],
+      fr: {
+        title: 'Kermesse d’été des familles',
+        description: rt('Jeux gonflables, maquillage, épluchette et limonade : la grande fête d’été du CPE, en fin d’après-midi, familles bienvenues !'),
+        importantNote: 'De 15 h 30 à 18 h dans la cour. En cas de pluie, remise au lendemain.',
+      },
+      en: {
+        title: 'Families’ summer fair',
+        description: rt('Bouncy games, face painting, corn roast and lemonade: the CPE’s big summer party, late afternoon, families welcome!'),
+        importantNote: 'From 3:30 to 6 p.m. in the yard. Moved to the next day in case of rain.',
+      },
+    },
+    {
+      date: day(31),
+      visibility: 'portal',
+      image: img.soupe,
+      groups: [renardeaux],
+      fr: {
+        title: 'Atelier cuisine : la soupe du potager',
+        description: rt('Les Renardeaux récoltent les légumes du potager de la cour, les lavent, les coupent (avec les couteaux d’apprentissage !) et préparent la soupe que tout le CPE mangera au dîner.'),
+        checklist: [{ item: 'Vêtements qui peuvent se salir' }],
+      },
+      en: {
+        title: 'Cooking workshop: garden soup',
+        description: rt('The Renardeaux harvest the yard garden’s vegetables, wash them, cut them (with learning knives!) and make the soup the whole CPE will eat at lunch.'),
+        checklist: [{ item: 'Clothes that can get messy' }],
+      },
+    },
+    {
+      date: day(45),
+      visibility: 'public',
+      image: img.pommes,
+      groups: [papillons, renardeaux, explorateurs],
+      fr: {
+        title: 'Sortie au verger',
+        description: rt('Le grand classique de septembre : cueillette de pommes, tour de tracteur et collation au milieu des pommiers. Les pommes cueillies deviendront compote maison la semaine suivante.'),
+        importantNote: 'Autorisation de sortie requise. Transport en autobus scolaire.',
+        checklist: [{ item: 'Chaussures fermées' }, { item: 'Vêtements chauds en couches' }],
+      },
+      en: {
+        title: 'Orchard outing',
+        description: rt('The great September classic: apple picking, a tractor ride and a snack among the apple trees. The apples become homemade applesauce the following week.'),
+        importantNote: 'Outing authorization required. School-bus transport.',
+        checklist: [{ item: 'Closed shoes' }, { item: 'Warm layered clothes' }],
+      },
+    },
+    {
+      date: day(80),
+      visibility: 'public',
+      image: img.citrouilles,
+      groups: [poussins, lapinots, papillons, renardeaux, explorateurs],
+      fr: {
+        title: 'Semaine des citrouilles et des costumes',
+        description: rt('Décoration de citrouilles (sans couteaux !), chasse aux bonbons-collants dans la cour et défilé de costumes entre les groupes. Les costumes de la maison sont bienvenus toute la semaine.'),
+        importantNote: 'Pas de masques couvrant le visage ni d’accessoires pointus, s’il vous plaît.',
+      },
+      en: {
+        title: 'Pumpkin and costume week',
+        description: rt('Pumpkin decorating (no knives!), a sticker-treat hunt in the yard and a costume parade between groups. Costumes from home are welcome all week.'),
+        importantNote: 'No face-covering masks or pointy accessories, please.',
+      },
+    },
+    {
+      date: day(150),
+      visibility: 'public',
+      image: img.neige,
+      groups: [lapinots, papillons, renardeaux, explorateurs],
+      fr: {
+        title: 'Grand carnaval d’hiver',
+        description: rt('Sculptures sur neige, peinture sur neige, glissade et chocolat chaud servi dehors : une semaine pour aimer l’hiver comme les enfants savent le faire.'),
+        checklist: [{ item: 'Habit de neige complet' }, { item: 'Deuxième paire de mitaines' }],
+      },
+      en: {
+        title: 'Big winter carnival',
+        description: rt('Snow sculptures, snow painting, sliding and hot chocolate served outside: a week for loving winter the way children do.'),
+        checklist: [{ item: 'Full snowsuit' }, { item: 'Second pair of mittens' }],
+      },
+    },
   ]
 
   for (const a of activities) {
@@ -1090,14 +1533,34 @@ async function run() {
   }
 
   // ---- Gallery: past activities (consent-confirmed demo illustrations) ----
+  // Mix of public photos (website gallery) and portal-only photos, some
+  // group-scoped — so the demo shows every visibility tier in action.
   console.log('Seeding gallery…')
-  const galleryDefs = [
-    { theme: 'parc', at: day(-6), fr: 'Cerfs-volants au parc — que du vent et des sourires', en: 'Kites at the park — nothing but wind and smiles' },
-    { theme: 'peinture', at: day(-12), fr: 'Nos artistes ont repeint le mois de juin', en: 'Our artists repainted the month of June' },
-    { theme: 'jardinage', at: day(-19), fr: 'Les premières pousses du potager', en: 'The vegetable garden’s first sprouts' },
-    { theme: 'musique', at: day(-26), fr: 'Fanfare improvisée dans la salle de motricité', en: 'Improvised fanfare in the motor-skills room' },
-    { theme: 'histoires', at: day(-33), fr: 'L’heure du conte sous les étoiles en feutrine', en: 'Story time under felt stars' },
-    { theme: 'motricite', at: day(-40), fr: 'Le grand parcours des petits champions', en: 'The little champions’ big course' },
+  const galleryDefs: {
+    theme: string
+    at: string
+    fr: string
+    en: string
+    visibility: 'public' | 'portal'
+    groups?: number[]
+  }[] = [
+    { theme: 'parc', at: day(-6), visibility: 'public', fr: 'Cerfs-volants au parc — que du vent et des sourires', en: 'Kites at the park — nothing but wind and smiles' },
+    { theme: 'peinture', at: day(-12), visibility: 'public', fr: 'Nos artistes ont repeint le mois de juin', en: 'Our artists repainted the month of June' },
+    { theme: 'jardinage', at: day(-19), visibility: 'public', fr: 'Les premières pousses du potager', en: 'The vegetable garden’s first sprouts' },
+    { theme: 'musique', at: day(-26), visibility: 'public', fr: 'Fanfare improvisée dans la salle de motricité', en: 'Improvised fanfare in the motor-skills room' },
+    { theme: 'histoires', at: day(-33), visibility: 'public', fr: 'L’heure du conte sous les étoiles en feutrine', en: 'Story time under felt stars' },
+    { theme: 'motricite', at: day(-40), visibility: 'public', fr: 'Le grand parcours des petits champions', en: 'The little champions’ big course' },
+    { theme: 'piscine', at: day(-3), visibility: 'public', fr: 'Première canicule, premiers jeux d’eau', en: 'First heat wave, first water games' },
+    { theme: 'velo', at: day(-15), visibility: 'public', fr: 'Le grand prix de draisiennes de la cour', en: 'The yard’s balance-bike grand prix' },
+    { theme: 'ferme', at: day(-60), visibility: 'public', fr: 'La visite de la petite ferme — coup de cœur pour le poney', en: 'The little farm’s visit — the pony stole every heart' },
+    { theme: 'cabane', at: day(-120), visibility: 'public', fr: 'Cabane à sucre : la tire sur neige fait l’unanimité', en: 'Sugar shack: maple taffy wins unanimously' },
+    { theme: 'neige', at: day(-160), visibility: 'public', fr: 'Notre bonhomme de neige record (presque deux étages !)', en: 'Our record snowman (almost two storeys!)' },
+    { theme: 'spectacle', at: day(-30), visibility: 'public', fr: 'Le spectacle de fin d’année des Explorateurs', en: 'The Explorateurs’ year-end show' },
+    // Portal-only, group-scoped photos (parents of these groups only)
+    { theme: 'bricolage', at: day(-8), visibility: 'portal', groups: [papillons], fr: 'Papillons : les mobiles prennent leur envol', en: 'Papillons: the mobiles take flight' },
+    { theme: 'sciences', at: day(-10), visibility: 'portal', groups: [explorateurs], fr: 'Explorateurs : éruption contrôlée en classe de sciences', en: 'Explorateurs: controlled eruption in science class' },
+    { theme: 'pique_nique', at: day(-22), visibility: 'portal', groups: [poussins], fr: 'Poussins : premier pique-nique sur la grande couverture', en: 'Poussins: first picnic on the big blanket' },
+    { theme: 'muffins', at: day(-17), visibility: 'portal', fr: 'Atelier muffins : toute une équipe en cuisine !', en: 'Muffin workshop: quite the kitchen crew!' },
   ]
   for (const g of galleryDefs) {
     const data = await renderIllustration(g.theme)
@@ -1107,6 +1570,8 @@ async function run() {
       data: {
         caption: g.fr,
         takenAt: g.at,
+        visibility: g.visibility,
+        groups: g.groups,
         consentConfirmed: true,
         demoSeed: true,
         _status: 'published',
@@ -1135,13 +1600,30 @@ async function run() {
 
   // ---- Demo documents (tiny generated PDFs, clearly fictional) ----
   const docDefs = [
-    { fr: 'Guide des parents (démo)', en: 'Parent guide (demo)', category: 'guides' as const, audience: 'public' as const },
-    { fr: 'Menu de la semaine (démo)', en: 'Weekly menu (demo)', category: 'menus' as const, audience: 'portal' as const },
-    { fr: 'Politique en cas de maladie (démo)', en: 'Illness policy (demo)', category: 'politiques' as const, audience: 'portal' as const },
+    { key: 'guide', fr: 'Guide des parents (démo)', en: 'Parent guide (demo)', category: 'guides' as const, audience: 'public' as const },
+    {
+      key: 'menu',
+      fr: 'Menu des 4 prochaines semaines (démo)',
+      en: 'Menu for the next 4 weeks (demo)',
+      category: 'menus' as const,
+      audience: 'public' as const,
+      lines: [
+        'Semaine 1 : potage de courge, macaroni au boeuf, tofu croustillant, pain de saumon, omelette du jardin.',
+        'Semaine 2 : soupe alphabet, poulet au citron, chili doux vegetarien, couscous aux legumes, quesadillas.',
+        'Semaine 3 : creme de brocoli, pates sauce rosee, boulettes de dinde, riz frit aux oeufs, pizza maison.',
+        'Semaine 4 : soupe poulet et nouilles, saute de porc a l erable, dahl de lentilles, poisson pane maison, hachis.',
+        'Collations : fruits frais, fromage, muffins maison, crudites et houmous, yogourt et granola.',
+      ],
+    },
+    { key: 'maladie', fr: 'Politique en cas de maladie (démo)', en: 'Illness policy (demo)', category: 'politiques' as const, audience: 'portal' as const },
+    { key: 'integration', fr: 'Politique d’intégration progressive (démo)', en: 'Gradual-integration policy (demo)', category: 'politiques' as const, audience: 'public' as const },
+    { key: 'effets', fr: 'Liste des effets à apporter (démo)', en: 'What-to-bring checklist (demo)', category: 'guides' as const, audience: 'public' as const },
+    { key: 'calendrier', fr: 'Calendrier annuel des fermetures (démo)', en: 'Annual closure calendar (demo)', category: 'general' as const, audience: 'public' as const },
+    { key: 'regie', fr: 'Régie interne (démo)', en: 'Internal rules (demo)', category: 'politiques' as const, audience: 'portal' as const },
   ]
-  const documentIds: number[] = []
+  const documentIdsByKey: Record<string, number> = {}
   for (const d of docDefs) {
-    const pdf = makeDemoPdf(d.fr)
+    const pdf = makeDemoPdf(d.fr, 'lines' in d ? (d.lines as string[]) : [])
     const doc = await payload.create({
       collection: 'documents',
       locale: 'fr',
@@ -1149,14 +1631,67 @@ async function run() {
       file: {
         data: pdf,
         mimetype: 'application/pdf',
-        name: `${d.category}-demo.pdf`,
+        name: `${d.key}-demo.pdf`,
         size: pdf.length,
       },
     })
     await payload.update({ collection: 'documents', id: doc.id, locale: 'en', data: { title: d.en } })
-    documentIds.push(doc.id as number)
+    documentIdsByKey[d.key] = doc.id as number
   }
-  const [, menuDocId, policyDocId] = documentIds
+  const menuDocId = documentIdsByKey['menu']
+  const policyDocId = documentIdsByKey['maladie']
+
+  // ---- Nutrition page (kitchen section) ----
+  await payload.updateGlobal({
+    slug: 'nutrition-page',
+    locale: 'fr',
+    data: {
+      intro:
+        'Chaque midi, une soixantaine de petites assiettes quittent notre cuisine — préparées sur place, le matin même, par une équipe qui connaît chaque allergie et chaque petit appétit. (Contenu de démonstration.)',
+      philosophy: rt(
+        'Notre philosophie tient en trois mots : frais, simple, ensemble. Frais, parce que tout est cuisiné sur place à partir d’aliments de base, en suivant le Guide alimentaire canadien et le cadre « Gazelle et Potiron ». Simple, parce que les enfants n’ont pas besoin d’assiettes compliquées — ils ont besoin de vrais aliments, présentés avec constance.',
+        'Ensemble, parce que le repas est un moment d’apprentissage : on se sert soi-même, on goûte à son rythme, on jase — et personne n’est jamais forcé de finir son assiette. L’adulte décide de ce qui est offert ; l’enfant décide de la quantité qu’il mange.',
+      ),
+      weeklyMenu: [
+        { day: 'Lundi', snackAm: 'Quartiers de pomme et fromage', lunch: 'Potage de courge, macaroni au bœuf et légumes, yogourt', snackPm: 'Muffin maison à la banane, lait' },
+        { day: 'Mardi', snackAm: 'Crudités et houmous', lunch: 'Poulet au citron, riz, brocoli vapeur, compote maison', snackPm: 'Galettes d’avoine, lait' },
+        { day: 'Mercredi', snackAm: 'Melon et bleuets', lunch: 'Chili doux végétarien, pain de blé, salade de concombre', snackPm: 'Yogourt et granola' },
+        { day: 'Jeudi', snackAm: 'Bananes et céréales sèches', lunch: 'Pain de saumon, purée de pommes de terre, petits pois', snackPm: 'Fromage et craquelins' },
+        { day: 'Vendredi', snackAm: 'Oranges en quartiers', lunch: 'Omelette du jardin, patates grelots rôties, salade de fruits', snackPm: 'Pouding au riz maison' },
+      ],
+      allergies: rt(
+        'Le CPE est un milieu entièrement sans arachides et sans noix. Chaque allergie ou intolérance est consignée au dossier de l’enfant, affichée en cuisine avec photo, et communiquée à toute l’équipe — y compris les remplaçantes.',
+        'Les enfants allergiques mangent le même repas que les autres, adapté : jamais un menu « à part ». Toute l’équipe est formée à l’administration de l’auto-injecteur, et les protocoles sont revus chaque année.',
+        'Pour cette raison, aucune nourriture de la maison n’entre au CPE — y compris les gâteaux d’anniversaire (la cuisine prépare une surprise sécuritaire pour chaque fête).',
+      ),
+      menuDocument: menuDocId,
+      photos: [img.repas, img.soupe, img.muffins],
+    },
+  })
+  await payload.updateGlobal({
+    slug: 'nutrition-page',
+    locale: 'en',
+    data: {
+      intro:
+        'Every noon, some sixty little plates leave our kitchen — prepared on site that very morning by a team that knows every allergy and every little appetite. (Demonstration content.)',
+      philosophy: rt(
+        'Our philosophy fits in three words: fresh, simple, together. Fresh, because everything is cooked on site from basic ingredients, following Canada’s Food Guide and the “Gazelle et Potiron” framework. Simple, because children do not need complicated plates — they need real food, offered consistently.',
+        'Together, because mealtime is a learning moment: serving yourself, tasting at your own pace, chatting — and no one is ever forced to finish their plate. The adult decides what is offered; the child decides how much to eat.',
+      ),
+      weeklyMenu: [
+        { day: 'Monday', snackAm: 'Apple wedges and cheese', lunch: 'Squash soup, beef and vegetable macaroni, yogurt', snackPm: 'Homemade banana muffin, milk' },
+        { day: 'Tuesday', snackAm: 'Veggies and hummus', lunch: 'Lemon chicken, rice, steamed broccoli, homemade applesauce', snackPm: 'Oat cookies, milk' },
+        { day: 'Wednesday', snackAm: 'Melon and blueberries', lunch: 'Mild vegetarian chili, whole-wheat bread, cucumber salad', snackPm: 'Yogurt and granola' },
+        { day: 'Thursday', snackAm: 'Bananas and dry cereal', lunch: 'Salmon loaf, mashed potatoes, green peas', snackPm: 'Cheese and crackers' },
+        { day: 'Friday', snackAm: 'Orange wedges', lunch: 'Garden omelette, roasted baby potatoes, fruit salad', snackPm: 'Homemade rice pudding' },
+      ],
+      allergies: rt(
+        'The CPE is an entirely peanut- and nut-free environment. Every allergy or intolerance is recorded in the child’s file, posted in the kitchen with a photo, and shared with the whole team — including substitutes.',
+        'Children with allergies eat the same meal as everyone else, adapted: never a menu “apart”. The entire team is trained in auto-injector administration, and protocols are reviewed yearly.',
+        'For this reason, no food from home enters the CPE — including birthday cakes (the kitchen prepares a safe surprise for every celebration).',
+      ),
+    },
+  })
 
   // ---- Announcements & news centre (every kind represented) ----
   console.log('Seeding news centre…')
@@ -1275,6 +1810,42 @@ async function run() {
       en: {
         title: 'Winter outing registration (coming up)',
         body: rt('Details of the winter outing will be announced here next week.'),
+      },
+    },
+    {
+      kind: 'event',
+      scope: 'cpe',
+      eventDate: day(24),
+      image: img.fete,
+      fr: {
+        title: 'Kermesse d’été : familles bienvenues !',
+        body: rt(
+          'Jeux gonflables, maquillage, épluchette et limonade dans la cour, de 15 h 30 à 18 h. Confirmez votre présence sur la feuille au vestiaire — on prévoit les épis en conséquence !',
+        ),
+      },
+      en: {
+        title: 'Summer fair: families welcome!',
+        body: rt(
+          'Bouncy games, face painting, corn roast and lemonade in the yard, 3:30 to 6 p.m. Confirm on the sheet at the cubbies — we plan the corn accordingly!',
+        ),
+      },
+    },
+    {
+      kind: 'news',
+      scope: 'groups',
+      groups: [poussins],
+      image: img.pique_nique,
+      fr: {
+        title: 'Poussins : les photos du premier pique-nique sont en ligne',
+        body: rt(
+          'Les souvenirs du premier pique-nique des Poussins vous attendent dans la section Photos du portail. Bonne visite !',
+        ),
+      },
+      en: {
+        title: 'Poussins: first-picnic photos are online',
+        body: rt(
+          'Memories from the Poussins’ first picnic await you in the portal’s Photos section. Enjoy!',
+        ),
       },
     },
     {

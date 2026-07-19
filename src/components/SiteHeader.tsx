@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { path: '/activites', key: 'activities' },
   { path: '/notre-cpe', key: 'about' },
   { path: '/vie-au-cpe', key: 'life' },
+  { path: '/nutrition', key: 'nutrition' },
   { path: '/admission', key: 'admission' },
   { path: '/faq', key: 'faq' },
   { path: '/carrieres', key: 'careers' },

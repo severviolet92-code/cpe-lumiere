@@ -1,7 +1,14 @@
 /** Builds a tiny valid single-page PDF with a title line — demo documents only. */
-export function makeDemoPdf(title: string): Buffer {
-  const safe = title.replace(/[\\()]/g, ' ').replace(/[^\x20-\x7E]/g, '?')
-  const stream = `BT /F1 20 Tf 72 720 Td (${safe}) Tj ET\nBT /F1 11 Tf 72 690 Td (Document de demonstration - contenu fictif.) Tj ET`
+export function makeDemoPdf(title: string, lines: string[] = []): Buffer {
+  const esc = (s: string) => s.replace(/[\\()]/g, ' ').replace(/[^\x20-\x7E]/g, '?')
+  const safe = esc(title)
+  let stream = `BT /F1 20 Tf 72 720 Td (${safe}) Tj ET\nBT /F1 11 Tf 72 690 Td (Document de demonstration - contenu fictif.) Tj ET`
+  let y = 660
+  for (const line of lines) {
+    stream += `\nBT /F1 11 Tf 72 ${y} Td (${esc(line)}) Tj ET`
+    y -= 18
+    if (y < 72) break
+  }
   const objects = [
     '<</Type/Catalog/Pages 2 0 R>>',
     '<</Type/Pages/Kids[3 0 R]/Count 1>>',

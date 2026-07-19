@@ -48,6 +48,18 @@ export const Groups: CollectionConfig = {
       admin: { placeholder: { fr: 'ex. : 18 mois à 2 ans', en: 'e.g. 18 months to 2 years' } },
     },
     {
+      name: 'description',
+      type: 'textarea',
+      localized: true,
+      label: { fr: 'Description du groupe (site public)', en: 'Group description (public site)' },
+      admin: {
+        description: {
+          fr: 'Ce que vivent les enfants de ce groupe : rythme, apprentissages, ratio. Aucune information sur un enfant précis.',
+          en: 'What children in this group experience: rhythm, learning, ratio. No information about any specific child.',
+        },
+      },
+    },
+    {
       name: 'color',
       type: 'select',
       required: true,

@@ -54,6 +54,12 @@ export const JobOpenings: CollectionConfig = {
       localized: true,
       label: { fr: 'Description du poste', en: 'Position description' },
     },
+    {
+      name: 'qualifications',
+      type: 'richText',
+      localized: true,
+      label: { fr: 'Qualifications recherchées', en: 'Required qualifications' },
+    },
     demoSeedField,
   ],
 }

@@ -11,6 +11,7 @@ const PORTAL_NAV = [
   { path: '/portail', key: 'navDashboard' },
   { path: '/portail/activites', key: 'navActivities' },
   { path: '/portail/annonces', key: 'navAnnouncements' },
+  { path: '/portail/photos', key: 'navPhotos' },
   { path: '/portail/documents', key: 'navDocuments' },
   { path: '/portail/aide', key: 'navHelp' },
 ] as const
